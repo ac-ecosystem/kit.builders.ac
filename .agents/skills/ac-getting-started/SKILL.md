@@ -19,8 +19,11 @@ Honor a request to prepare files without signing in. Never ask for secrets in ch
 After both services return successful read-only tool results, ask:
 "Your accounts are connected. What's your company's website?"
 If the user already supplied the website, use it rather than asking again.
-If authentication is deferred, you can still discuss targeting when requested;
-do not imply the accounts are connected.
+If authentication is deferred or tools need a client reload, offer to begin the
+website-to-ICP workflow while connection checks remain pending. Those checks do
+not gate website research. Do not imply the accounts are connected. Own native
+login and verification when authorized; delegate only browser consent or client
+controls that require the user. Follow start.md for a concise resumable handoff.
 
 ## Understand the business
 
