@@ -1,0 +1,47 @@
+# Connection acceptance: 1.2–1.4
+
+Use a fresh copy of the kit with no project authentication. The user needs an
+installed, signed-in Claude Code or Codex client and access to both services.
+"Clean machine" does not mean the kit installs the AI client or creates paid
+service accounts. Run the primary acceptance in Claude Code, as the brief requires;
+repeat in Codex for compatibility.
+
+## Procedure
+
+1. Open the kit as the project, accept the client's trust prompt, and ask it to
+   set up the kit. Do not manually edit JSON or TOML.
+2. Confirm both project server entries load. Complete native OAuth for each.
+   On Treg's consent screen choose the intended team.
+3. In one session, list/discover .ac tools and call `me` successfully.
+4. In that same session, discover Treg tools and call `my_tools` or `balance`
+   successfully. No paid data call is necessary.
+5. Confirm the agent asks for the company website only after both checks pass.
+6. Restart the client. Confirm connections can reuse native saved authentication
+   without asking for pasted keys or manual configuration edits.
+7. Repeat setup and confirm it does not duplicate entries or erase other settings.
+
+## Failure checks
+
+- Cancel sign-in: setup remains incomplete and identifies the pending service.
+- Wrong/missing team access: let the user choose the right team or obtain access;
+  never fall back to an internal shared token.
+- A tool returns `isError`: do not count HTTP 200 as success.
+- Project not trusted or MCP not approved: explain the native prompt, do not
+  disable client protections.
+- Server unreachable: preserve the working connection and report the affected one.
+- Config is missing or names conflict: follow the scoped repair in AGENTS.md.
+
+## Evidence
+
+Record date, client version, fresh-copy method, discovered tool names, the two
+successful calls, restart result, and any blockers. Keep customer data and tokens
+out of recordings and committed files. `.kit/setup-status.md` is ignored.
+
+| Task | Required evidence |
+| --- | --- |
+| 1.2 | Fresh clone opens in Claude Code and lists authenticated .ac tools |
+| 1.3 | .ac OAuth and a real tool call work with no hand-edited configuration |
+| 1.4 | Treg returns a real tool result in the same session |
+
+Public endpoint checks and valid configuration files are prerequisites, not a
+substitute for this acceptance run. Leave unchecked items open until observed.

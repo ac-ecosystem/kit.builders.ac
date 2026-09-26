@@ -1,0 +1,9 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+.codex/auth.json
+.kit/
+runs/
+node_modules/
