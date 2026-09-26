@@ -7,11 +7,10 @@ discovery is checked separately from authenticated acceptance. The user has aske
 to defer authentication during development; do not mark Notion 1.2–1.4 complete
 until the fresh-client acceptance run in `acceptance.md` is actually observed.
 
-Public distribution uses the builders.ac website's allowlisted static assets:
-`/start.md` and `/skills/ac-getting-started/`. Source stays in this private repo;
-visitors do not need GitHub access. The website records the source commit and
-file hashes. Public availability must be verified after deployment separately
-from committing and pushing the site.
+Public distribution uses this repository directly. The builders.ac website links
+to `https://github.com/ac-ecosystem/kit.builders.ac` and does not vendor
+`start.md` or skill files. Public availability must be verified after pushing the
+kit and landing-page changes.
 
 ## Next focused skills
 

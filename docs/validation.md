@@ -1,6 +1,6 @@
 # Validation status
 
-Date: 2026-09-26
+Date: 2026-09-27
 
 ## Observed
 
@@ -25,7 +25,7 @@ not grant account access or establish successful MCP tool execution.
 - Authenticated tool discovery and .ac `me` plus Treg `my_tools`/`balance` in
   the same session.
 - Restart with retained authentication and the complete clean-machine flow.
-- Public download or deployment of `start.md`.
+- Anonymous access to the public repository from the landing-page prompt.
 
 Tasks 1.2–1.4 remain pending their live acceptance evidence. Implementation is
 ready for that test; no authentication should be requested while the owner is away.
@@ -37,4 +37,5 @@ local coding agents. The earlier two-MCP observations above describe the previou
 flow. Codex CLI 0.157.1 reproduced a Treg MCP OAuth metadata decoding failure before
 browser sign-in; public metadata checks alone did not detect that incompatibility.
 The revised Treg CLI flow and complete fresh setup still require authenticated
-acceptance. Source and website release consistency can be checked independently.
+acceptance. Repository availability and the landing-page link can be checked
+independently.

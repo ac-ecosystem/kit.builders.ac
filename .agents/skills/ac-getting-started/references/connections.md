@@ -1,7 +1,8 @@
 # Connect builders.ac and Treg
 
-Read https://builders.ac/start.md for the current client-specific configuration
-and authentication procedure. In a development checkout, use the root start.md.
+Read the repository's [start.md](../../../../start.md) for the current
+client-specific configuration and authentication procedure. This public
+repository is the canonical source; do not use copied website assets.
 Use only the current client's configuration. Codex, Claude Code, Cursor, Gemini
 CLI, and OpenClaw use different locations; do not apply Claude's JSON everywhere.
 

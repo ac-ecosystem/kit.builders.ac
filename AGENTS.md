@@ -10,5 +10,6 @@ Do not embed internal production access or shared company tokens.
 
 Current scope: getting started and ICP discovery. Prospecting, infrastructure,
 and campaign skills are planned in `docs/roadmap.md`, not yet implemented.
-Use `node scripts/check-endpoints.mjs` for public OAuth discovery only;
+Use `node scripts/validate-kit.mjs` for repository validation and
+`node scripts/check-endpoints.mjs` for public OAuth discovery only;
 `docs/acceptance.md` describes the separate authenticated acceptance test.

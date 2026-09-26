@@ -1,12 +1,21 @@
 # Set up builders.ac
 
-Configure builders.ac and Treg in the agent running this conversation, install
-our getting-started skill, then complete native authentication.
-No builders.ac CLI, GitHub account, repository clone, or ZIP is needed.
+Use this public repository as the builders.ac onboarding workspace. Configure
+builders.ac and Treg in the agent running this conversation, load the included
+getting-started skill, then complete native authentication. This repository is
+the source of truth; do not retrieve copied setup or skill files from the
+builders.ac website.
 This release connects tools and guides website/ICP discovery; campaign execution
 is a later milestone. Preserve any explicit request to defer authentication.
 
 ## Execution contract
+
+If the current project is not this kit checkout, clone
+`https://github.com/ac-ecosystem/kit.builders.ac.git` into a new
+`kit.builders.ac` folder and use that folder as the project. Do not copy the kit
+into an unrelated repository or recreate its files manually. If the running
+client cannot load project MCP settings added after startup, ask for one restart
+from the cloned folder and continue there.
 
 Follow the section for the current client and the supported fallbacks below.
 Preserve the requested configuration scope and use native authentication. Execute supported
@@ -92,15 +101,13 @@ native OAuth flow. If this version lacks native remote MCP/OAuth, report the
 compatibility limitation and consult its official docs; do not silently install
 bridges or use shared tokens. Node-hosted and Gateway configuration differ.
 
-## 2. Install the getting-started skill
+## 2. Load the included getting-started skill
 
-Download these public files, preserving their names and relative layout:
-
-- https://builders.ac/skills/ac-getting-started/SKILL.md
-- https://builders.ac/skills/ac-getting-started/references/connections.md
-- https://builders.ac/skills/ac-getting-started/references/targeting.md
-
-Use the current client's destination:
+The canonical skill is already present at
+`.agents/skills/ac-getting-started/`. Codex loads it from there. Claude Code uses
+the included `.claude/skills/ac-getting-started` link to that same directory.
+For another client, use the canonical local directory as the source and place it
+at the client's project destination only when that client requires its own path:
 
 | Client | Skill directory in the project/workspace |
 | --- | --- |
@@ -110,13 +117,13 @@ Use the current client's destination:
 | Gemini CLI | `.gemini/skills/ac-getting-started/` |
 | OpenClaw | `skills/ac-getting-started/` in the active agent workspace |
 
-Read before installing. Do not overwrite user-customized skills without resolving
-the difference. Use normal files; no symlinks are required. Keep runtime reports
+Read before placing it in another client directory. Do not overwrite
+user-customized skills without resolving the difference. Keep runtime reports
 in `.kit/` only when needed to resume, and customer briefs in `runs/`. In a Git
 repository, ignore those paths without altering other entries; do not create a
 standalone `.gitignore` in a non-repository just to report setup activity. If no project is open, establish a
 new working folder with the user before writing files. These instructions can
-also be followed directly when a client cannot hot-load the installed skill.
+also be followed directly when a client cannot hot-load the included skill.
 
 ## 3. Authenticate and check
 

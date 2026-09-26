@@ -1,13 +1,26 @@
 # builders.ac kit
 
-Open this folder in Claude Code or Codex and say:
+This public repository is the canonical builders.ac onboarding kit. Give its URL
+to a local coding agent:
+
+> Set up builders.ac — https://github.com/ac-ecosystem/kit.builders.ac
+
+Clone and open the repository in Claude Code or Codex:
+
+```sh
+git clone https://github.com/ac-ecosystem/kit.builders.ac.git
+cd kit.builders.ac
+```
+
+Then say:
 
 > Set up the kit and connect my accounts.
 
 The reusable workflow is the **ac-getting-started** skill. You can also invoke
 `/ac-getting-started` in Claude Code or `$ac-getting-started` in Codex.
-[`start.md`](start.md) is the entry point intended for the landing page's
-copy-and-paste setup prompt. The website publishes it alongside the skill files; no repository clone or ZIP is needed.
+[`start.md`](start.md) is the agent-readable entry point. The builders.ac landing
+page links to this repository directly; it does not publish another copy of the
+instructions or skill files.
 
 The kit includes the builders.ac MCP settings and instructions for Treg CLI. Your agent
 guides you through signing in and checks both connections. You never need to
@@ -27,8 +40,8 @@ This version provides the connection setup for tasks 1.2–1.4. builders.ac uses
 remote MCP with OAuth; Treg uses its official CLI and browser sign-in. The agent
 installs Treg directly with a tool manager if needed and executes native login
 flows itself, opening client-issued sign-in links when necessary. Authenticated
-acceptance of this revised flow remains unverified. The source repository remains
-private; the website serves an explicit allowlist of public setup files.
+acceptance of this revised flow remains unverified. This repository is public and
+is the distribution source linked by builders.ac.
 
 | Client | Included project configuration | Sign-in |
 | --- | --- | --- |
@@ -55,9 +68,10 @@ An empty successful tool result is valid. A configuration entry, an HTTP 401,
 or an OAuth metadata response alone does not pass this test. The connection
 check does not purchase data, provision infrastructure, or send email.
 
-For maintainers: `node scripts/check-endpoints.mjs` checks the public endpoints
-and OAuth discovery without credentials. It does **not** test authenticated
-tool calls. See [the acceptance checklist](docs/acceptance.md).
+For maintainers: `node scripts/validate-kit.mjs` checks repository structure and
+the single-source distribution contract. `node scripts/check-endpoints.mjs`
+checks public endpoints and OAuth discovery without credentials. Neither command
+tests authenticated tool calls. See [the acceptance checklist](docs/acceptance.md).
 
 ## Contents
 
@@ -79,4 +93,7 @@ See [validation](docs/validation.md) for the checks performed on this version.
 
 ## Public distribution
 
-`start.md` supports Codex, Claude Code, Cursor, Gemini CLI, and native-MCP OpenClaw versions. Live authentication remains unverified. The website vendors only `start.md` and the three skill files, with a source commit recorded in `public/kit-release.json`. Update with `node scripts/sync-kit.mjs ../kit.builders.ac` from the website repo. No runtime customer files are published.
+`start.md` supports Codex, Claude Code, Cursor, Gemini CLI, and native-MCP
+OpenClaw versions. Live authentication remains unverified. This repository is the
+only published copy of the kit; reviewed changes become available from the same
+public URL after they are pushed. Runtime customer files remain Git-ignored.
