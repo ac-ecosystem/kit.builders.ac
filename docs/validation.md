@@ -41,3 +41,16 @@ browser sign-in; public metadata checks alone did not detect that incompatibilit
 The revised Treg CLI flow and complete fresh setup still require authenticated
 acceptance. Repository availability and the landing-page link can be checked
 independently.
+
+## Infrastructure skill: item 2.1
+
+- Added `ac-infra` with a shared Claude Code link and a provisioning reference.
+- Checked tool names, argument mapping, OAuth collection reads, capacity rules,
+  Operation handling, and sequencer semantics against the app's committed
+  v1alpha1 OpenAPI and MCP dispatcher source on 2026-09-27. Public OpenAPI
+  retrieval was unavailable during this check; live discovery remains authoritative.
+- Repository validation and the skill-creator frontmatter validator pass.
+- Reviewed the offline scenarios in `infra-acceptance.md` against the instructions;
+  this is a static review, not an authenticated agent or provider test.
+- No domains or mailboxes were provisioned for this change. Live item 2.1
+  acceptance and the separate item 2.2 recording remain pending.

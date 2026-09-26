@@ -34,6 +34,20 @@ After the connections work, the agent asks for your company website. It will
 help you confirm your offer and choose whom to target using short multiple-choice
 questions. Lead sourcing and campaign execution are subsequent milestones.
 
+## Infrastructure
+
+Say “set up infrastructure for <your domain>” or invoke `/ac-infra` in Claude
+Code (`$ac-infra` in Codex). The agent checks existing resources, agrees on a
+supported mailbox total, provisions through builders.ac MCP, and verifies the
+result. It can also connect inboxes to your existing sequencer when requested.
+Only builders.ac authentication is required for this workflow.
+
+Connecting an owned domain reserves 50 slots; mailbox creation is a separate
+step with supported totals of 50, 75, or 150. DNS delegation may need registrar
+action. Domain purchases and campaign activation are not implemented by this
+skill. Live acceptance for the new skill remains pending; see the
+[infrastructure checklist](docs/infra-acceptance.md).
+
 ## Current milestone
 
 This version provides the connection setup for tasks 1.2–1.4. builders.ac uses
@@ -78,6 +92,8 @@ tests authenticated tool calls. See [the acceptance checklist](docs/acceptance.m
 - `start.md`: agent-readable setup entry point.
 - `.agents/skills/ac-getting-started/`: canonical onboarding skill and references.
 - `.claude/skills/ac-getting-started`: relative link to the same skill for Claude Code.
+- `.agents/skills/ac-infra/`: canonical infrastructure skill and contract reference.
+- `.claude/skills/ac-infra`: relative link for Claude Code discovery.
 - `.mcp.json` and `.codex/config.toml`: project-scoped, credential-free MCP settings.
 - `docs/roadmap.md`: later skills and the remaining campaign integration work.
 

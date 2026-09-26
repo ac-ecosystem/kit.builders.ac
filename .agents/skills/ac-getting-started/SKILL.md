@@ -39,7 +39,8 @@ or raw tool responses in it. Existing briefs should be updated, not overwritten
 with assumptions or duplicated at every restart.
 
 End with the selected segment, the business reason for it, unresolved inputs,
-and the next proposed step: a small prospect sample. This version does not
-implement prospect sourcing, verification, provisioning, or campaign launch.
-Do not claim those operations occurred or install another integration to fill
-the gap without explaining the additional scope.
+and the next proposed step: a small prospect sample. Prospect sourcing,
+verification, and campaign launch are not implemented here.
+For requested domain/mailbox setup, use [ac-infra](../ac-infra/SKILL.md); it does
+not require a completed targeting brief. Do not claim later operations occurred
+or install another integration to fill a gap without explaining the scope.

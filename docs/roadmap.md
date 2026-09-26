@@ -12,12 +12,18 @@ to `https://github.com/ac-ecosystem/kit.builders.ac` and does not vendor
 `start.md` or skill files. Public availability must be verified after pushing the
 kit and landing-page changes.
 
-## Next focused skills
+## Infrastructure implementation
+
+`ac-infra` is implemented for Notion item 2.1: owned-domain setup, mailbox
+provisioning, progress/resumption, and optional sequencer connection. Its live
+acceptance is pending [infra-acceptance.md](infra-acceptance.md). This does not
+complete item 2.2, the recorded end-to-end campaign run.
+
+## Remaining skills
 
 | Skill | Outcome | Important conditions |
 | --- | --- | --- |
 | `ac-prospecting` | Small sample, then verified prospect list via Treg | Confirm targeting and spending limit; preserve source/recency; separate invalid and uncertain addresses; sample before expanding |
-| `ac-infra` | Suitable inboxes connected to the selected sequencer | Reuse tenant-owned resources; discover current capability; wait for async completion; assess readiness before sending |
 | `ac-campaign` | Reviewed copy and draft campaign, then requested activation | Reuse connected sequencer; check recipient suppression, sender capacity, schedule, unsubscribe handling; reconcile retries; verify live state |
 
 Implement and validate each with real provider capabilities before advertising it.
