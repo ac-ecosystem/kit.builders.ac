@@ -16,7 +16,8 @@ follow [connections.md](references/connections.md). Configuration, authenticatio
 and successful tool calls are different states; report only what you observed.
 Honor a request to prepare files without signing in. Never ask for secrets in chat.
 
-After both services return successful read-only tool results, ask:
+After builders.ac returns a successful read-only tool result and Treg returns a
+successful read-only CLI result, ask:
 "Your accounts are connected. What's your company's website?"
 If the user already supplied the website, use it rather than asking again.
 If authentication is deferred or tools need a client reload, offer to begin the

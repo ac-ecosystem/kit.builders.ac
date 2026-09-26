@@ -1,5 +1,2 @@
 [mcp_servers.builders-ac]
 url = "https://mcp.builders.ac/mcp"
-
-[mcp_servers.treg]
-url = "https://treg.to/mcp/"

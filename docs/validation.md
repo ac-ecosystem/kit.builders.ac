@@ -29,3 +29,12 @@ not grant account access or establish successful MCP tool execution.
 
 Tasks 1.2–1.4 remain pending their live acceptance evidence. Implementation is
 ready for that test; no authentication should be requested while the owner is away.
+
+## Updated local setup path
+
+The current instructions configure builders.ac MCP only and use Treg CLI for all
+local coding agents. The earlier two-MCP observations above describe the previous
+flow. Codex CLI 0.157.1 reproduced a Treg MCP OAuth metadata decoding failure before
+browser sign-in; public metadata checks alone did not detect that incompatibility.
+The revised Treg CLI flow and complete fresh setup still require authenticated
+acceptance. Source and website release consistency can be checked independently.

@@ -3,10 +3,6 @@
     "builders-ac": {
       "type": "http",
       "url": "https://mcp.builders.ac/mcp"
-    },
-    "treg": {
-      "type": "http",
-      "url": "https://treg.to/mcp/"
     }
   }
 }

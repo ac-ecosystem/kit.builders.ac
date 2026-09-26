@@ -9,13 +9,13 @@ The reusable workflow is the **ac-getting-started** skill. You can also invoke
 [`start.md`](start.md) is the entry point intended for the landing page's
 copy-and-paste setup prompt. The website publishes it alongside the skill files; no repository clone or ZIP is needed.
 
-The kit includes the connection settings for builders.ac and Treg. Your agent
+The kit includes the builders.ac MCP settings and instructions for Treg CLI. Your agent
 guides you through signing in and checks both connections. You never need to
 edit JSON, TOML, or paste an API key into chat.
 
 Accept your client's normal project-trust and MCP connection prompts. Complete
 each service's sign-in and consent screen; for Treg, choose the team you intend
-to use. Credentials stay in your client's authentication storage.
+to use. Credentials stay in the respective client or CLI authentication storage.
 
 After the connections work, the agent asks for your company website. It will
 help you confirm your offer and choose whom to target using short multiple-choice
@@ -23,15 +23,16 @@ questions. Lead sourcing and campaign execution are subsequent milestones.
 
 ## Current milestone
 
-This version provides the connection setup for tasks 1.2–1.4. The two remote
-servers use HTTP and OAuth. No Treg CLI, local MCP server, or npm installation
-is required for normal use. Authenticated acceptance remains unverified, deferred
-at the owner's request. The source repository remains private; the website serves an explicit allowlist of public setup files.
+This version provides the connection setup for tasks 1.2–1.4. builders.ac uses
+remote MCP with OAuth; Treg uses its official CLI and browser sign-in. The agent
+installs Treg if needed and executes the login commands itself. Authenticated
+acceptance of this revised flow remains unverified. The source repository remains
+private; the website serves an explicit allowlist of public setup files.
 
 | Client | Included project configuration | Sign-in |
 | --- | --- | --- |
-| Claude Code | `.mcp.json` | `/mcp`, or `claude mcp login builders-ac` and `claude mcp login treg` |
-| Codex | `.codex/config.toml` | `codex mcp login builders-ac` and `codex mcp login treg` |
+| Claude Code | `.mcp.json` | `claude mcp login builders-ac` (or `/mcp` if unavailable), then `treg login` |
+| Codex | `.codex/config.toml` | `codex mcp login builders-ac`, then `treg login` |
 
 Open the kit itself as your project. Codex loads project configuration only for
 trusted projects. A client already running when files are added may need a
@@ -47,7 +48,7 @@ your participation: downloading a folder cannot grant access to your accounts.
 In the same agent session:
 
 1. Discover builders.ac tools and successfully call `me`.
-2. Discover Treg tools and successfully call `my_tools` or `balance`.
+2. Run `treg balance` and a read-only `treg catalog search "email verification"` successfully.
 
 An empty successful tool result is valid. A configuration entry, an HTTP 401,
 or an OAuth metadata response alone does not pass this test. The connection

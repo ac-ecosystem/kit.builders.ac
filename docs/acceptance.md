@@ -10,12 +10,15 @@ repeat in Codex for compatibility.
 
 1. Open the kit as the project, accept the client's trust prompt, and ask it to
    set up the kit. Do not manually edit JSON or TOML.
-2. Confirm both project server entries load. Complete native OAuth for each.
-   On Treg's consent screen choose the intended team.
+2. Confirm the builders.ac project server loads and the agent runs its native MCP
+   login command. Confirm it installs Treg if missing and runs `treg login`.
+   Complete browser sign-in and choose the intended Treg team. No Treg MCP entry
+   should be added.
 3. In one session, list/discover .ac tools and call `me` successfully.
-4. In that same session, discover Treg tools and call `my_tools` or `balance`
-   successfully. No paid data call is necessary.
-5. Confirm the agent asks for the company website only after both checks pass.
+4. In that same conversation, run `treg balance` and a read-only
+   `treg catalog search "email verification"` successfully. No paid data call is necessary.
+5. Confirm the agent reports each connection accurately and asks for the company
+   website. Website research may proceed while connection checks remain pending.
 6. Restart the client. Confirm connections can reuse native saved authentication
    without asking for pasted keys or manual configuration edits.
 7. Repeat setup and confirm it does not duplicate entries or erase other settings.
@@ -41,7 +44,7 @@ out of recordings and committed files. `.kit/setup-status.md` is ignored.
 | --- | --- |
 | 1.2 | Fresh clone opens in Claude Code and lists authenticated .ac tools |
 | 1.3 | .ac OAuth and a real tool call work with no hand-edited configuration |
-| 1.4 | Treg returns a real tool result in the same session |
+| 1.4 | Treg CLI returns authenticated balance and catalog results in the same conversation |
 
 Public endpoint checks and valid configuration files are prerequisites, not a
 substitute for this acceptance run. Leave unchecked items open until observed.
