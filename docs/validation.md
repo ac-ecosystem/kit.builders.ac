@@ -12,6 +12,9 @@ Date: 2026-09-27
 - A native Claude Code login attempt stopped at pending project approval.
   No OAuth login completed. Further authentication attempts were explicitly
   deferred by the owner.
+- An anonymous shallow clone from the public GitHub URL included the project MCP
+  settings, canonical skill, and Claude Code skill link without authentication.
+- The deployed builders.ac landing page copied the public repository URL directly.
 
 ## Local verification
 
@@ -25,7 +28,6 @@ not grant account access or establish successful MCP tool execution.
 - Authenticated tool discovery and .ac `me` plus Treg `my_tools`/`balance` in
   the same session.
 - Restart with retained authentication and the complete clean-machine flow.
-- Anonymous access to the public repository from the landing-page prompt.
 
 Tasks 1.2–1.4 remain pending their live acceptance evidence. Implementation is
 ready for that test; no authentication should be requested while the owner is away.
