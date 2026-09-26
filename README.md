@@ -25,7 +25,8 @@ questions. Lead sourcing and campaign execution are subsequent milestones.
 
 This version provides the connection setup for tasks 1.2–1.4. builders.ac uses
 remote MCP with OAuth; Treg uses its official CLI and browser sign-in. The agent
-installs Treg if needed and executes the login commands itself. Authenticated
+installs Treg directly with a tool manager if needed and executes native login
+flows itself, opening client-issued sign-in links when necessary. Authenticated
 acceptance of this revised flow remains unverified. The source repository remains
 private; the website serves an explicit allowlist of public setup files.
 

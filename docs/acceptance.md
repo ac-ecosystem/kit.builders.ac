@@ -11,7 +11,9 @@ repeat in Codex for compatibility.
 1. Open the kit as the project, accept the client's trust prompt, and ask it to
    set up the kit. Do not manually edit JSON or TOML.
 2. Confirm the builders.ac project server loads and the agent runs its native MCP
-   login command. Confirm it installs Treg if missing and runs `treg login`.
+   login command or exposed native authentication flow. Confirm it installs the
+   Treg package directly if missing and runs `treg login`, without bootstrapping
+   other coding clients.
    Complete browser sign-in and choose the intended Treg team. No Treg MCP entry
    should be added.
 3. In one session, list/discover .ac tools and call `me` successfully.
@@ -31,6 +33,16 @@ repeat in Codex for compatibility.
 - A tool returns `isError`: do not count HTTP 200 as success.
 - Project not trusted or MCP not approved: explain the native prompt, do not
   disable client protections.
+- Login requires a terminal: use a PTY or the client's available native auth tool;
+  preserve the actual login result instead of reporting a pipeline's exit status.
+- Browser does not launch: open the active client-issued authorization URL; keep
+  its listener alive and verify completion. If no local browser can be launched,
+  provide the active link or documented remote-login path without asking for
+  callback codes in chat.
+- New server absent from `/mcp`: reconnect or save progress for one restart;
+  do not loop on approval instructions for an invisible server.
+- Installer permission denied: request specific native approval if available;
+  do not bypass the denial or modify session permission settings.
 - Server unreachable: preserve the working connection and report the affected one.
 - Config is missing or names conflict: follow the scoped repair in AGENTS.md.
 

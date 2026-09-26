@@ -8,8 +8,8 @@ is a later milestone. Preserve any explicit request to defer authentication.
 
 ## Execution contract
 
-Follow the section for the current client exactly and in order. Do not substitute
-another scope, installer, transport, or authentication method. Execute supported
+Follow the section for the current client and the supported fallbacks below.
+Preserve the requested configuration scope and use native authentication. Execute supported
 setup and login commands yourself; do not hand the user a command checklist. The
 normal user actions are required project trust or MCP approval, browser sign-in
 and consent, and a client restart when its documented reconnect cannot load a
@@ -130,9 +130,62 @@ it. Never capture or replay browser credentials or consent on the user's behalf.
 Never request passwords, OTPs, or API keys in chat. For Treg, the user chooses
 their own team; never use a shared company token.
 
+### Shared login flow (all clients): native URL → open browser → verify
+
+Use this same approach in Codex, Claude Code, Cursor, Gemini CLI, and OpenClaw,
+and for Treg CLI: have the native authentication flow issue the sign-in URL,
+open it for the user, wait for completion, and verify access. Client differences
+only determine how to start the native flow. If it opens the browser automatically,
+keep that flow running instead of opening duplicate tabs.
+
+1. Inspect available tools and installed help. Reuse a working connection. Prefer
+   an exposed native authentication tool that returns an active sign-in URL;
+   otherwise start the supported native login command or connection control.
+   Start only one flow for each service. Use an interactive terminal
+   (PTY/TTY) when the command requires it and the execution tool provides one.
+   Run login directly, without `| tail` or other pipelines that hide prompts and
+   the login exit status. Keep the login process or native callback listener alive
+   while the user signs in. A background-task exit code alone is not proof of login.
+2. If the shell cannot provide the required terminal, use the client's exposed
+   native authentication tool or connection control. Discover the actual schema;
+   do not assume every client exposes the same tool name. A terminal error is
+   a reason to try this supported path, not to abandon authentication.
+3. Take the authorization URL returned by the active flow and, unless it already
+   launched the browser, open that exact URL yourself. On
+   macOS use `open`, on desktop Linux use `xdg-open`, and on Windows use the native
+   browser launcher such as PowerShell `Start-Process`. Pass the URL as one safely
+   quoted argument or a structured argument, never interpolate it as shell code.
+   Opening the page is part of setup; leave account selection, sign-in, and consent
+   to the user. Say what they need to do in the browser, then observe the flow's
+   result rather than asking them to say “done” when completion is observable.
+4. The authorization URL must come from the active native client/CLI flow. Do not
+   construct OAuth URLs, PKCE values, callback ports, or tokens yourself, or reuse
+   a URL after its listener has ended. If a flow expires, start a fresh native
+   flow. Do not run competing logins for the same service. On remote/headless
+   hosts, use the client's documented remote-login mode; opening a localhost
+   callback flow on a different machine does not make its listener reachable.
+5. If browser launching is unavailable or denied, provide the active sign-in link
+   for the user to open. Do not ask for callback URLs, authorization codes, tokens,
+   or passwords in chat. If a client supports manual callback input, direct the
+   user to that client's designated authentication prompt. Keep transient URLs
+   out of saved reports and committed files.
+6. After login, check its result, rediscover tools if needed, and run the read-only
+   verification below. Distinguish browser-launch success, OAuth success, and a
+   successful authenticated call. Do not promise hot-loading or a reconnect-free
+   result before observing it.
+
+When an action needs permission, request the native approval for that specific
+command if available and resume after approval. If the session policy denies it
+without an approval path, explain the exact blocked action and required client
+control. Do not broaden session permissions, self-approve MCP servers, or rerun
+an equivalent denied command through another wrapper to evade the denial.
+
 ### builders.ac: native MCP authentication
 
 Use the existing builders.ac server name if reused; otherwise use `builders-ac`.
+First discover an exposed native authentication tool and use it when available.
+The following client entry points apply when a usable tool is not exposed; all
+paths continue through the shared URL-opening and verification flow above.
 
 - Codex: execute `codex mcp login <builders-server-name>` from the project.
   Wait for the command result. If the server is not found, inspect the effective
@@ -140,11 +193,17 @@ Use the existing builders.ac server name if reused; otherwise use `builders-ac`.
   client's output. A startup trust warning alone does not prove login is blocked.
 - Claude Code: after writing or reusing the configuration, check `claude mcp --help`.
   If `login` is supported, execute `claude mcp login <builders-server-name>`
-  yourself from the project, using an interactive terminal if needed. Wait for
-  the command result and continue verification. Do not stop at configuration or
-  merely tell the user to run the command. If an actual pending-project-approval
-  error blocks login, ask the user to open `/mcp` and approve that server, then
-  retry. Use native authentication through `/mcp` only if CLI login is unavailable.
+  directly in an interactive terminal when available. If it reports a terminal
+  requirement and no PTY is available, discover and use the in-session native
+  authentication tool (some versions expose an `authenticate` placeholder for
+  an approved, unauthenticated server). Open its returned URL as described above.
+  If a pending-project-approval error blocks login, use `/mcp` to approve the
+  server when it is visible. If the new server is absent from the running client's
+  controls, use a documented reconnect or request one session restart in the same
+  project, with a resume note. Do not repeatedly direct the user to an empty
+  `/mcp` list. After approval/loading, resume login and verification yourself.
+  Use `/mcp` authentication controls if no callable native auth tool or usable
+  CLI login is available. Do not launch a nested agent to simulate loaded tools.
 - Cursor: use the native MCP connection/authorization controls in settings.
 - Gemini CLI: use `/mcp auth <builders-server-name>`.
 - OpenClaw: use native MCP authentication for the installed version; consult its
@@ -152,18 +211,34 @@ Use the existing builders.ac server name if reused; otherwise use `builders-ac`.
 
 ### Treg: official CLI
 
-For local coding agents, follow Treg's local setup path at https://treg.to/llms.txt.
-Reuse an installed CLI and working login. If `treg` is missing, read the official
-installer and run it yourself:
+Use Treg's official Python package directly, preserving the scope of this setup.
+Reuse an installed CLI and working login. The general installer at
+https://treg.to/install.sh also bootstraps skills across detected coding clients;
+do not run that script for this project-scoped onboarding.
+
+If `treg` is missing and `uv` is available, execute:
 
 ```sh
-curl -fsSL https://treg.to/install.sh | sh
+uv tool install --python '>=3.12,<3.14' 'tools-registry[proxy]'
 ```
 
-Check the installer's output for the executable location if this shell does not
-pick up the updated PATH. Execute `treg login`, let the user complete browser
-sign-in and select their own team, then wait for the command result. Verify with
-`treg balance` and one read-only `treg catalog search "email verification"`.
+This installs a user-level CLI executable in an isolated tool environment; it
+should not register MCP servers or bootstrap skills in other coding clients.
+Do not run `treg skill bootstrap` or `treg mcp install`. If `uv` is unavailable,
+use an existing `pipx` with an available Python 3.12 or 3.13, for example
+`pipx install --python python3.12 'tools-registry[proxy]'`. Check installed help
+and interpreter availability first. If neither manager is available, explain the
+missing prerequisite and use its official installation instructions with native
+approval as needed; do not silently modify system Python or use the broad Treg
+installer as a fallback. These direct package commands match the package and
+Python range in Treg's installer; consult its current documentation if they change.
+
+Resolve the executable through the tool manager if this shell's PATH has not
+updated. Run `treg login` yourself, applying the terminal and browser fallbacks
+above when supported by the installed CLI. Open its client-issued sign-in URL
+if it does not open automatically. Let the user sign in and select their
+own team, wait for the result, then verify with `treg balance` and one read-only
+`treg catalog search "email verification"`.
 Use installed CLI help for team selection if it remains unset. Do not call paid
 tools, add funds, or provision resources during verification.
 

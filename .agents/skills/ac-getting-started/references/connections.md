@@ -11,14 +11,24 @@ project approval and a reconnect. Never claim that tools became available merely
 because a file was written. Honor requests to defer authentication.
 
 Use builders.ac MCP and Treg's official CLI for local coding agents. After adding
-builders.ac configuration, execute the client's supported native login yourself:
+builders.ac configuration, prefer an exposed native authentication tool; otherwise
+execute the client's supported native login yourself:
 `codex mcp login <builders-server-name>` or `claude mcp login <builders-server-name>`.
-Check installed help; use Claude's `/mcp` only for required approval or when the
-CLI login command is unavailable. Wait for login results and continue verification.
+Run login directly without output-filtering pipelines; use a PTY when required.
+If unavailable, discover the client's native authentication tool or control.
+Follow start.md's shared flow for every client: open the exact URL issued by the active
+native flow yourself, retaining its callback listener. Do not construct OAuth
+URLs or ask for callback URLs or authorization codes in chat. If a newly added
+server is absent from Claude's `/mcp`, use a documented reconnect or one resumable
+session restart before asking for approval there again.
 Discover builders.ac schemas and call `me` in the current session.
 
-Follow start.md to install Treg if missing, run `treg login`, and verify with
-`treg balance` plus a read-only `treg catalog search "email verification"`.
+Follow start.md to install Treg's official package directly with `uv` or `pipx`
+if missing. Do not run the general shell installer, which bootstraps other clients.
+Run `treg login`, then verify with `treg balance` plus a read-only
+`treg catalog search "email verification"`. Request native command approval when
+needed; do not broaden session permissions or hand executable work to the user
+when a supported execution and approval path is available.
 Do not add Treg MCP for this local workflow. A builders.ac reconnect does not
 block Treg CLI setup. Report each service's authentication and verification status
 separately; never claim a live MCP check from a configuration or login result.
