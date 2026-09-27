@@ -6,7 +6,8 @@ getting-started skill, then complete native authentication. This repository is
 the source of truth; do not retrieve copied setup or skill files from the
 builders.ac website.
 This release covers website/ICP discovery, prospecting, infrastructure, and a
-campaign CSV handoff. Preserve any explicit request to defer authentication.
+campaign draft when the matching sequencer MCP is already available. Preserve
+any explicit request to defer authentication.
 
 ## Execution contract
 
@@ -108,7 +109,7 @@ bridges or use shared tokens. Node-hosted and Gateway configuration differ.
 ## 2. Load the included skills
 
 The canonical skills are already present under `.agents/skills/`: getting started,
-prospecting, infrastructure, and campaign handoff. Codex loads them there.
+prospecting, infrastructure, and campaign drafting. Codex loads them there.
 Claude Code uses the included links under `.claude/skills/`. For another client,
 use every canonical local skill directory as the source and place it at the
 client's project destination only when that client requires its own path:

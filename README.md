@@ -63,17 +63,20 @@ emails, and writes one canonical `prospects.csv`.
 Invoke `ac-campaign` after eligible leads and connected senders are ready. It
 discovers the user's sequencer through builders.ac, writes shared sequence
 templates in `campaign.md`, and derives an import-ready `campaign.csv` containing
-only eligible recipients and reviewed personalization variables. It never imports,
-sends, creates, or activates a remote campaign; the user performs the final
-provider preview and launch.
+only eligible recipients and reviewed personalization variables. If that
+sequencer's MCP is already loaded and authenticated in the same session, the
+agent uses it to create and fully configure an inactive campaign draft, imports
+the reviewed recipients, verifies the draft, and stops. The agent never adds the
+provider MCP, asks for its key, sends email, or activates the campaign. Without a
+matching MCP, it reports that the remote campaign cannot be created.
 
 ## Connection model
 
 builders.ac uses remote MCP with OAuth; Treg uses its official CLI and browser
 sign-in. The agent installs Treg directly with a tool manager if needed and starts
-native login flows. No additional provider or Provisioning credential is needed
-to produce the campaign handoff. Authenticated lifecycle acceptance remains
-pending.
+native login flows. Campaign drafting uses only a matching sequencer MCP that the
+user has already configured and authenticated; the kit does not configure one or
+handle its credential. Authenticated lifecycle acceptance remains pending.
 
 | Client | Included project configuration | Sign-in |
 | --- | --- | --- |
@@ -113,7 +116,7 @@ tests authenticated tool calls. See [the acceptance checklist](docs/acceptance.m
 - `.agents/skills/ac-infra/`: canonical infrastructure skill and contract reference.
 - `.claude/skills/ac-infra`: relative link for Claude Code discovery.
 - `.agents/skills/ac-prospecting/`: canonical sourcing and verification skill.
-- `.agents/skills/ac-campaign/`: canonical campaign planning and CSV handoff skill.
+- `.agents/skills/ac-campaign/`: canonical campaign planning, CSV, and inactive remote-draft skill.
 - `.claude/skills/`: links to every canonical skill for Claude Code discovery.
 - `.mcp.json` and `.codex/config.toml`: project-scoped, credential-free MCP settings.
 - `docs/run-artifacts.md`: fixed private artifacts shared by every phase.

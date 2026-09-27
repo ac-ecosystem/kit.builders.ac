@@ -61,8 +61,10 @@ independently.
   Code links.
 - Static repository and run-workspace checks cover skill packaging, reference
   resolution, the fixed CSV header, and rejection of unexpected run files.
-- Campaign handoff uses a fixed provider-neutral CSV plus shared placeholder
-  templates and requires no provider credential or remote mutation.
-- Authenticated prospect sourcing and manual import validation in each advertised
+- Campaign drafting uses a fixed provider-neutral CSV plus shared placeholder
+  templates. It may create an inactive remote campaign only through a matching
+  sequencer MCP already loaded and authenticated in the current session; it does
+  not configure that MCP, retrieve its credential, launch, or send.
+- Authenticated prospect sourcing and inactive-draft validation in each advertised
   sequencer remain pending
   [lifecycle acceptance](lifecycle-acceptance.md).

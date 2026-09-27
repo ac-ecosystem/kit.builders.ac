@@ -2,7 +2,9 @@
 
 `campaign.md` defines the shared sequence and settings. `campaign.csv` is the
 provider-importable lead table. Together they describe exactly what the user can
-import and turn on; neither artifact authorizes or performs a remote mutation.
+review before launch. They are also the source of truth when the campaign skill
+creates an inactive draft through an already configured provider MCP. Neither
+artifact authorizes campaign activation or email delivery.
 
 ## Fixed CSV schema
 
@@ -63,7 +65,12 @@ prepared. A run is `ready_for_launch` only when:
 3. Every row renders every step without an unresolved or blank placeholder.
 4. Counts, exclusions, provider/workspace, and planned senders are recorded.
 5. The run workspace validator succeeds.
+6. The matching sequencer MCP created the remote campaign and a read-back proves
+   it remains inactive with the intended sequence, senders, and recipient count.
 
-At that point stop. Do not authenticate to the provider, import the CSV, create
-a remote campaign, send email, or activate anything. The user performs those
-steps in the sequencer.
+If a matching sequencer MCP is already loaded and authenticated, the skill may
+create and configure the remote draft, import these rows, and verify the result.
+It must not configure the MCP, obtain credentials, send tests, activate, launch,
+start, or resume the campaign. If no matching MCP is available, record the
+blocker instead of marking the run ready, and tell the user that remote creation
+was not possible.

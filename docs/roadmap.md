@@ -24,7 +24,7 @@ complete item 2.2, the recorded end-to-end campaign run.
 | Skill | Outcome | Important conditions |
 | --- | --- | --- |
 | `ac-prospecting` | Small sample, then verified prospect list via Treg | Implemented; authenticated acceptance pending |
-| `ac-campaign` | Reviewed shared sequence and import-ready personalized CSV | Implemented as a credential-free handoff; provider import and activation remain user-controlled |
+| `ac-campaign` | Reviewed shared sequence, personalized CSV, and inactive provider draft | Uses only an already configured matching sequencer MCP; blocked without one; activation remains user-controlled |
 
 Validate the handoff against the import rules of each advertised provider before
 calling it portable. Keep conditional best practices in the relevant skill or
@@ -32,8 +32,9 @@ reference.
 
 ## Findings that affect the next milestone
 
-- Normal provider-account responses intentionally exclude credentials. Campaign
-  handoff does not need them because it stops before any provider mutation.
+- Normal provider-account responses intentionally exclude credentials. Remote
+  drafting uses the provider's already configured MCP instead of extracting or
+  exposing the credential stored by builders.ac.
 - Sequencers combine shared templates with standard and custom lead variables.
   `campaign.csv` carries those variables while `campaign.md` carries the shared
   sequence and provider mapping.
@@ -43,5 +44,5 @@ reference.
   against the user's current connection instead of migrating their production
   sender fleet to match a stale brief.
 
-The campaign CSV and placeholder mapping must be acceptance-tested against each
-advertised provider's import UI before claiming portability.
+The campaign CSV, placeholder mapping, and inactive-draft lifecycle must be
+acceptance-tested against each advertised provider before claiming support.

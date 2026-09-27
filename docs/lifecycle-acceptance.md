@@ -1,8 +1,8 @@
 # Lifecycle acceptance
 
 Run these checks from a fresh public clone. Static validation proves packaging;
-authenticated checks prove discovery and prospecting. Campaign acceptance stops
-before provider import or email delivery.
+authenticated checks prove discovery and prospecting. Campaign acceptance may
+create an inactive provider draft but never delivers email.
 
 ## Static
 
@@ -40,14 +40,22 @@ and the verified remote state is recorded in `infrastructure.md`.
 4. Render every row locally and confirm no placeholder is unresolved or blank.
    Check a sample against its saved public evidence and reject one fabricated or
    formula-like value.
-5. Confirm `run.md` becomes `ready_for_launch` only after both campaign artifacts
-   and the run validator pass.
-6. Confirm the agent stops. It must not authenticate to the sequencer, import the
-   CSV, create a campaign, attach senders, send a preview, or activate anything.
+5. With no provider MCP loaded, confirm the agent preserves the artifacts, marks
+   the run blocked, and plainly reports that it cannot create the remote campaign.
+   It must not edit MCP configuration or ask for a provider credential.
+6. In a separate disposable workspace with the matching provider MCP already
+   loaded and authenticated, confirm the agent creates a new inactive campaign,
+   configures the reviewed sequence and settings, assigns only the intended
+   senders, imports exactly the eligible CSV rows, and reads the result back.
+7. Confirm `run.md` becomes `ready_for_launch` only after the local validator and
+   remote status/count checks pass.
+8. Confirm the agent stops while the campaign is still inactive. It must not call
+   any activate, launch, start, resume, send, preview, or test-email operation.
 
 ## Manual provider check
 
 For each provider advertised as supported, use a disposable draft owned by the
-maintainer and verify the documented column mapping and placeholder rendering in
-the provider UI. Do not launch it. Record provider-specific mapping corrections
-in the campaign reference before claiming support.
+maintainer and verify the documented column mapping, placeholders, sequence,
+sender assignment, imported count, and inactive status in the provider UI. Do
+not launch it. Record provider-specific mapping corrections in the campaign
+reference before claiming support.

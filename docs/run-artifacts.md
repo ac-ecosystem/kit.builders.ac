@@ -54,7 +54,7 @@ evidence; `run.md` links to it rather than copying the detail.
 | `ac-getting-started` | `run.md`, `brief.md` |
 | `ac-prospecting` | `run.md`, `prospecting.md`, `prospects.csv` |
 | `ac-infra` | `run.md`, `infrastructure.md` |
-| `ac-campaign` | `run.md`, `campaign.md`, `campaign.csv`; reads `prospects.csv` |
+| `ac-campaign` | `run.md`, `campaign.md`, `campaign.csv`; reads `prospects.csv`; may record one inactive remote draft |
 
 `prospects.csv` keeps one normalized row per candidate and uses this fixed header:
 
@@ -72,6 +72,10 @@ explicitly to `eligible=true`.
 lead identity fields and the reviewed personalization variables documented in
 `campaign.md`. Do not add scripts, credential files, `.env` files, generated
 payloads, or provider response dumps beside it.
+
+When an already configured sequencer MCP creates a remote draft, record its
+public campaign ID and verified inactive status in `campaign.md`; do not create a
+new artifact for the provider operation.
 
 Artifacts may contain customer-owned contact data and public resource IDs, so
 keep them local and out of Git. Never store access tokens, API keys, passwords,
