@@ -54,3 +54,15 @@ independently.
   this is a static review, not an authenticated agent or provider test.
 - No domains or mailboxes were provisioned for this change. Live item 2.1
   acceptance and the separate item 2.2 recording remain pending.
+
+## Lifecycle skills
+
+- Added `ac-prospecting` and `ac-campaign` with shared run artifacts and Claude
+  Code links.
+- Static repository and run-workspace checks cover skill packaging, reference
+  resolution, the fixed CSV header, and rejection of unexpected run files.
+- Campaign handoff uses a fixed provider-neutral CSV plus shared placeholder
+  templates and requires no provider credential or remote mutation.
+- Authenticated prospect sourcing and manual import validation in each advertised
+  sequencer remain pending
+  [lifecycle acceptance](lifecycle-acceptance.md).

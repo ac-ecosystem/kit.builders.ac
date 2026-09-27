@@ -30,9 +30,10 @@ Accept your client's normal project-trust and MCP connection prompts. Complete
 each service's sign-in and consent screen; for Treg, choose the team you intend
 to use. Credentials stay in the respective client or CLI authentication storage.
 
-After the connections work, the agent asks for your company website. It will
-help you confirm your offer and choose whom to target using short multiple-choice
-questions. Lead sourcing and campaign execution are subsequent milestones.
+After the connections work, the agent asks for your company website. It confirms
+the offer and audience, sources and verifies prospects through Treg, prepares the
+infrastructure, and builds an import-ready campaign for the connected sequencer.
+Each phase updates one private run workspace so another session can resume it cleanly.
 
 ## Infrastructure
 
@@ -44,18 +45,30 @@ Only builders.ac authentication is required for this workflow.
 
 Connecting an owned domain reserves 50 slots; mailbox creation is a separate
 step with supported totals of 50, 75, or 150. DNS delegation may need registrar
-action. Domain purchases and campaign activation are not implemented by this
-skill. Live acceptance for the new skill remains pending; see the
+action. Domain purchases and campaign activation are outside this infrastructure
+skill. Live acceptance remains pending; see the
 [infrastructure checklist](docs/infra-acceptance.md).
 
-## Current milestone
+## Prospecting and campaigns
 
-This version provides the connection setup for tasks 1.2–1.4. builders.ac uses
-remote MCP with OAuth; Treg uses its official CLI and browser sign-in. The agent
-installs Treg directly with a tool manager if needed and executes native login
-flows itself, opening client-issued sign-in links when necessary. Authenticated
-acceptance of this revised flow remains unverified. This repository is public and
-is the distribution source linked by builders.ac.
+Invoke `ac-prospecting` after the targeting brief is confirmed. It uses Treg's
+live catalog, starts with a small costed sample, independently verifies retained
+emails, and writes one canonical `prospects.csv`.
+
+Invoke `ac-campaign` after eligible leads and connected senders are ready. It
+discovers the user's sequencer through builders.ac, writes shared sequence
+templates in `campaign.md`, and derives an import-ready `campaign.csv` containing
+only eligible recipients and reviewed personalization variables. It never imports,
+sends, creates, or activates a remote campaign; the user performs the final
+provider preview and launch.
+
+## Connection model
+
+builders.ac uses remote MCP with OAuth; Treg uses its official CLI and browser
+sign-in. The agent installs Treg directly with a tool manager if needed and starts
+native login flows. No additional provider or Provisioning credential is needed
+to produce the campaign handoff. Authenticated lifecycle acceptance remains
+pending.
 
 | Client | Included project configuration | Sign-in |
 | --- | --- | --- |
@@ -94,8 +107,11 @@ tests authenticated tool calls. See [the acceptance checklist](docs/acceptance.m
 - `.claude/skills/ac-getting-started`: relative link to the same skill for Claude Code.
 - `.agents/skills/ac-infra/`: canonical infrastructure skill and contract reference.
 - `.claude/skills/ac-infra`: relative link for Claude Code discovery.
+- `.agents/skills/ac-prospecting/`: canonical sourcing and verification skill.
+- `.agents/skills/ac-campaign/`: canonical campaign planning and CSV handoff skill.
+- `.claude/skills/`: links to every canonical skill for Claude Code discovery.
 - `.mcp.json` and `.codex/config.toml`: project-scoped, credential-free MCP settings.
-- `docs/roadmap.md`: later skills and the remaining campaign integration work.
+- `docs/run-artifacts.md`: fixed private artifacts shared by every phase.
 
 Customer briefs and local setup reports are written to Git-ignored directories.
 See [validation](docs/validation.md) for the checks performed on this version.

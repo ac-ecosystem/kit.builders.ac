@@ -19,6 +19,8 @@ assert(codex.includes(`url = "${mcpUrl}"`), '.codex/config.toml must use the bui
 for (const [name, files] of [
   ['ac-getting-started', ['SKILL.md', 'references/connections.md', 'references/targeting.md']],
   ['ac-infra', ['SKILL.md', 'references/provisioning.md']],
+  ['ac-prospecting', ['SKILL.md', 'references/treg.md']],
+  ['ac-campaign', ['SKILL.md', 'references/campaign-contract.md']],
 ]) {
   const canonicalSkill = resolve(root, '.agents/skills', name);
   const claudeSkill = resolve(root, '.claude/skills', name);

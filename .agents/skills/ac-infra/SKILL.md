@@ -12,6 +12,10 @@ Campaign creation, activation, and sending are separate tasks.
 
 ## Establish the target
 
+Read [the run artifact contract](../../../docs/run-artifacts.md). Reuse the run
+for this campaign idea or initialize one before writing infrastructure state. Do
+not create a standalone checkpoint or alternate run layout.
+
 Discover the connected builders.ac tools and their current schemas; call `me`
 to verify the account. If unavailable, follow the builders.ac connection steps in
 [connections.md](../ac-getting-started/references/connections.md). Infrastructure

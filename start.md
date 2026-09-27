@@ -5,8 +5,8 @@ builders.ac and Treg in the agent running this conversation, load the included
 getting-started skill, then complete native authentication. This repository is
 the source of truth; do not retrieve copied setup or skill files from the
 builders.ac website.
-This release connects tools and guides website/ICP discovery; campaign execution
-is a later milestone. Preserve any explicit request to defer authentication.
+This release covers website/ICP discovery, prospecting, infrastructure, and a
+campaign CSV handoff. Preserve any explicit request to defer authentication.
 
 ## Execution contract
 
@@ -101,21 +101,21 @@ native OAuth flow. If this version lacks native remote MCP/OAuth, report the
 compatibility limitation and consult its official docs; do not silently install
 bridges or use shared tokens. Node-hosted and Gateway configuration differ.
 
-## 2. Load the included getting-started skill
+## 2. Load the included skills
 
-The canonical skill is already present at
-`.agents/skills/ac-getting-started/`. Codex loads it from there. Claude Code uses
-the included `.claude/skills/ac-getting-started` link to that same directory.
-For another client, use the canonical local directory as the source and place it
-at the client's project destination only when that client requires its own path:
+The canonical skills are already present under `.agents/skills/`: getting started,
+prospecting, infrastructure, and campaign handoff. Codex loads them there.
+Claude Code uses the included links under `.claude/skills/`. For another client,
+use every canonical local skill directory as the source and place it at the
+client's project destination only when that client requires its own path:
 
 | Client | Skill directory in the project/workspace |
 | --- | --- |
-| Codex | `.agents/skills/ac-getting-started/` |
-| Claude Code | `.claude/skills/ac-getting-started/` |
-| Cursor | `.cursor/skills/ac-getting-started/` |
-| Gemini CLI | `.gemini/skills/ac-getting-started/` |
-| OpenClaw | `skills/ac-getting-started/` in the active agent workspace |
+| Codex | `.agents/skills/<skill-name>/` |
+| Claude Code | `.claude/skills/<skill-name>/` |
+| Cursor | `.cursor/skills/<skill-name>/` |
+| Gemini CLI | `.gemini/skills/<skill-name>/` |
+| OpenClaw | `skills/<skill-name>/` in the active agent workspace |
 
 Read before placing it in another client directory. Do not overwrite
 user-customized skills without resolving the difference. Keep runtime reports
@@ -272,11 +272,11 @@ If authentication is deferred, report files ready and live checks pending.
 
 ## 4. Ask for the company website
 
-Read the installed skill and follow its website-to-ICP workflow. Ask:
+Read `ac-getting-started` and follow its website-to-ICP workflow. Ask:
 "What's your company's website?" Website research and a targeting brief do not
 require both services to be connected; offer to continue this work when login is deferred
 or a client reload is pending, clearly retaining the pending connection status.
-Research the website, confirm
+Research the website, initialize or resume the matching run, confirm
 which offer to promote, suggest customer segments, and refine them through short
 multiple-choice questions. Save a targeting brief before proposing a lead sample.
 

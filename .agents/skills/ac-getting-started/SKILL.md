@@ -28,6 +28,10 @@ controls that require the user. Follow start.md for a concise resumable handoff.
 
 ## Understand the business
 
+Read [the run artifact contract](../../../docs/run-artifacts.md). Reuse a matching
+run or initialize one with `node scripts/run-workspace.mjs init <run-name>` before
+writing the brief. Do not create a partial run directory by hand.
+
 Follow [targeting.md](references/targeting.md) to research the website, confirm
 the offer, present plausible customer segments, and refine the user's selection
 with short multiple-choice questions. An ICP is a segment definition; a prospect
@@ -39,8 +43,9 @@ or raw tool responses in it. Existing briefs should be updated, not overwritten
 with assumptions or duplicated at every restart.
 
 End with the selected segment, the business reason for it, unresolved inputs,
-and the next proposed step: a small prospect sample. Prospect sourcing,
-verification, and campaign launch are not implemented here.
+and the next proposed step: a small prospect sample through
+[ac-prospecting](../ac-prospecting/SKILL.md). Campaign planning and CSV handoff
+belong to [ac-campaign](../ac-campaign/SKILL.md).
 For requested domain/mailbox setup, use [ac-infra](../ac-infra/SKILL.md); it does
 not require a completed targeting brief. Do not claim later operations occurred
 or install another integration to fill a gap without explaining the scope.
