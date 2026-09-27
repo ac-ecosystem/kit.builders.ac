@@ -71,6 +71,11 @@ PlusVibe, Smartlead, Instantly, or EmailBison. Do not assume the server name;
 inspect tool names, descriptions, and schemas for campaign creation, campaign
 updates, lead import, sender assignment, and campaign status.
 
+When the matched provider is PlusVibe, read and follow
+[the PlusVibe inactive-draft procedure](references/plusvibe.md) before making
+any remote mutation. The live tool descriptions and schemas remain the source
+of truth; stop rather than guessing if they conflict with the procedure.
+
 Do not add or edit MCP configuration, start a second agent session, call a
 provider API directly, or obtain credentials. If no matching sequencer MCP is
 already loaded and authenticated, do not attempt remote creation. Set `run.md`
