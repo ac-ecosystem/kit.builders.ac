@@ -31,6 +31,8 @@ behavioral acceptance cases, not claims that a live provider was exercised.
 
 | Scenario | Expected behavior |
 | --- | --- |
+| UAT requested but only a production MCP connection is available | Stop mutations and establish UAT; account identity alone is insufficient |
+| Two selected domains target 75: failed/empty and active/50; another failed domain exists | Propose reconnect then 75 on the first, add 25 on the second, leave the unselected domain alone |
 | Five inboxes requested on an empty domain | Explain allowed totals; no silent expansion to 50 |
 | Domain has 50 occupying inboxes, user wants 75 total | Add 25, not 75; pending/failed rows included in capacity reasoning |
 | Target appears after the first list page | Find and reuse it; no duplicate connect |

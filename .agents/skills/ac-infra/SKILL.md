@@ -16,6 +16,12 @@ Read [the run artifact contract](../../../docs/run-artifacts.md). Reuse the run
 for this campaign idea or initialize one before writing infrastructure state. Do
 not create a standalone checkpoint or alternate run layout.
 
+Verify the selected MCP endpoint against the requested environment before any
+mutation. This kit currently targets UAT at `https://sending.ac.team/mcp`. A
+successful login alone does not prove the environment; do not fall back to a
+production connection. Record the endpoint with the account/workspace public IDs
+in `infrastructure.md`, and recheck them when resuming.
+
 Discover the connected builders.ac tools and their current schemas; call `me`
 to verify the account. If unavailable, follow the builders.ac connection steps in
 [connections.md](../ac-getting-started/references/connections.md). Infrastructure
@@ -34,6 +40,31 @@ Use list tools with workspace/domain filters and all pages to find existing
 resources and work in flight. Reuse active domains and suitable inboxes; do not
 reconnect or recreate them just to rerun this skill. If a resource belongs to a
 different workspace than intended, resolve that mismatch before changing anything.
+
+## Build the per-domain plan
+
+Limit changes to the domains the user selected. Other failed domains discovered
+in the account are not automatically part of the task. For each selected domain,
+show current lifecycle state, active/pending/failed inbox counts, the agreed final
+total, and the proposed action. Available slots are a ceiling, not an instruction
+to spend them all. Use 75 per domain when that is the user's chosen target; do not
+silently choose 150 to maximize usage.
+
+For example, with an agreed target of 75 on each of two domains:
+
+- An existing failed domain with zero inboxes needs an eligible `reconnectDomain`,
+  then a verified active state, then creation of 75 inboxes. Do not call
+  `connectDomains` for a name the account already holds or unlink its tenant/DNS.
+- An active domain with 50 active inboxes needs 25 additional inboxes. Preserve
+  the existing 50 and its sequencer binding; no reconnect is needed.
+- If some inboxes are pending or failed, reconcile their Operations and capacity
+  first. Do not interpret “75 active” as permission to over-create replacements.
+
+The active domain's authorized top-up can proceed while another domain reconnects;
+only creation on the recovering domain depends on its reconnect completing.
+Ask for missing mailbox names/personas or permission to generate a naming pattern
+once, before creation. If the user requested a proposal first, stop at the plan;
+otherwise execute an already-authorized concrete plan without another approval.
 
 ## Provision and resume
 
