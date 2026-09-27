@@ -1,5 +1,10 @@
 # builders.ac kit
 
+**Test configuration:** this checkout targets UAT at
+`https://sending.ac.team/mcp`, not production. Sign in with your UAT account;
+verify `me` and the intended workspace before provisioning. Switching from the
+production endpoint may require reconnecting and authenticating again.
+
 This public repository is the canonical builders.ac onboarding kit. Give its URL
 to a local coding agent:
 

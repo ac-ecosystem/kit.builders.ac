@@ -27,7 +27,11 @@ perform and recording the observed result.
 
 ## 1. Configure builders.ac MCP
 
-- builders-ac: `https://mcp.builders.ac/mcp`
+This kit currently targets **UAT**. Use the user’s UAT account and verify `me`
+and the selected workspace before mutations. An existing production connection
+is not a substitute for this UAT connection; reconnect and authenticate as needed.
+
+- builders-ac: `https://sending.ac.team/mcp`
 - Treg: use its official CLI for local coding agents; do not add a Treg MCP entry.
 
 Identify the current client. Use the current project/workspace and preserve all
@@ -45,12 +49,12 @@ configuration. Do not silently install across sibling projects.
 Use the current working directory as the project. Inspect the user and project
 Codex configuration without printing unrelated settings or credentials. Compare
 canonical URLs after ignoring only a trailing slash. If an enabled server already
-points to `https://mcp.builders.ac/mcp`, reuse its existing name. Otherwise merge
+points to `https://sending.ac.team/mcp`, reuse its existing name. Otherwise merge
 this entry into the project's `.codex/config.toml` (trusted projects only):
 
 ```toml
 [mcp_servers.builders-ac]
-url = "https://mcp.builders.ac/mcp"
+url = "https://sending.ac.team/mcp"
 ```
 
 Do not use `codex mcp add`: this setup is project-scoped, not user-scoped. Do not
@@ -63,7 +67,7 @@ Use `.mcp.json` for Claude Code, `.cursor/mcp.json` for Cursor:
 ```json
 {
   "mcpServers": {
-    "builders-ac": { "type": "http", "url": "https://mcp.builders.ac/mcp" }
+    "builders-ac": { "type": "http", "url": "https://sending.ac.team/mcp" }
   }
 }
 ```
@@ -75,7 +79,7 @@ Merge into `.gemini/settings.json`. Use `httpUrl` for Streamable HTTP:
 ```json
 {
   "mcpServers": {
-    "builders-ac": { "httpUrl": "https://mcp.builders.ac/mcp" }
+    "builders-ac": { "httpUrl": "https://sending.ac.team/mcp" }
   }
 }
 ```
@@ -90,7 +94,7 @@ supporting `mcp.servers`, merge this entry into the active OpenClaw configuratio
 {
   "mcp": {
     "servers": {
-      "builders-ac": { "url": "https://mcp.builders.ac/mcp", "transport": "streamable-http", "auth": "oauth" }
+      "builders-ac": { "url": "https://sending.ac.team/mcp", "transport": "streamable-http", "auth": "oauth" }
     }
   }
 }

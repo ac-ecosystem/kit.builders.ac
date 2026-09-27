@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const mcpUrl = 'https://mcp.builders.ac/mcp';
+const mcpUrl = 'https://sending.ac.team/mcp';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);

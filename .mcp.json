@@ -2,7 +2,7 @@
   "mcpServers": {
     "builders-ac": {
       "type": "http",
-      "url": "https://mcp.builders.ac/mcp"
+      "url": "https://sending.ac.team/mcp"
     }
   }
 }
