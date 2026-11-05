@@ -58,7 +58,7 @@ const { check: checkSwap, allowedFiles: swapFiles } = await import('./swap-works
 await checkSwap(resolve(root, 'examples/swap'));
 assert(process.exitCode !== 1, 'examples/swap must pass the swap workspace check');
 const gitignore = await readFile(resolve(root, '.gitignore'), 'utf8');
-assert(gitignore.split('\n').includes('swap/'), '.gitignore must ignore the swap/ workspace');
+assert(gitignore.split('\n').includes('/swap/'), '.gitignore must ignore the root /swap/ workspace');
 for (const file of swapFiles) {
   const contents = await readFile(resolve(root, 'examples/swap', file), 'utf8');
   for (const match of contents.matchAll(/@([a-z0-9.-]+\.[a-z]{2,})/gi)) {
