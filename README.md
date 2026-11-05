@@ -65,6 +65,19 @@ the reviewed recipients, verifies the draft, and stops. The agent never adds the
 provider MCP, asks for its key, sends email, or activates the campaign. Without a
 matching MCP, it reports that the remote campaign cannot be created.
 
+## Swapping burned mailboxes
+
+Invoke `ac-swap` to keep live campaigns on healthy mailboxes. It flags mailboxes
+with sustained bounces, spam placement or a blacklisted domain, posts a swap
+proposal to Slack, and after an Approver replies `approve` it moves the flagged
+mailboxes out of their campaigns and puts Ready standbys from a per-ESP pool in
+their place. It also takes new mailboxes into the pool, recommends refills before
+the pool runs short, and posts a weekly summary. It starts in dry-run mode, uses
+only MCP connections you have already authenticated (builders.ac, your sequencer,
+Slack), and never launches campaigns, sends email or deprovisions mailboxes.
+Read the [ac-swap guide](docs/ac-swap.md); a synthetic workspace is in
+[`examples/swap/`](examples/swap/swap.md).
+
 ## Connection model
 
 builders.ac uses remote MCP with OAuth; Treg uses its official CLI and browser
@@ -112,9 +125,12 @@ tests authenticated tool calls. See [the acceptance checklist](docs/acceptance.m
 - `.claude/skills/ac-infra`: relative link for Claude Code discovery.
 - `.agents/skills/ac-prospecting/`: canonical sourcing and verification skill.
 - `.agents/skills/ac-campaign/`: canonical campaign planning, CSV, and inactive remote-draft skill.
+- `.agents/skills/ac-swap/`: canonical mailbox swap skill with sequencer, Slack and Deliverability references.
 - `.claude/skills/`: links to every canonical skill for Claude Code discovery.
 - `.mcp.json` and `.codex/config.toml`: project-scoped, credential-free MCP settings.
 - `docs/run-artifacts.md`: fixed private artifacts shared by every phase.
+- `docs/ac-swap.md`, `examples/swap/`, `scripts/swap-workspace.mjs`: swap guide, synthetic example and workspace checker.
+- `CONTEXT.md` and `docs/adr/`: domain glossary and architecture decisions.
 
 Customer briefs and local setup reports are written to Git-ignored directories.
 See [validation](docs/validation.md) for the checks performed on this version.

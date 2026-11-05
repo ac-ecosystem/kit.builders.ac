@@ -25,6 +25,7 @@ complete item 2.2, the recorded end-to-end campaign run.
 | --- | --- | --- |
 | `ac-prospecting` | Small sample, then verified prospect list via Treg | Implemented; authenticated acceptance pending |
 | `ac-campaign` | Reviewed shared sequence, personalized CSV, and inactive provider draft | Uses only an already configured matching sequencer MCP; blocked without one; activation remains user-controlled |
+| `ac-swap` | Flagged mailboxes swapped for Ready standbys after a Slack Decision; pool intake, refill recommendations, weekly summary | V0 proof of concept ([ADR 0001](adr/0001-swap-engine-as-kit-skill.md)); PlusVibe only; starts in dry-run; live demo acceptance pending; never deprovisions in V0 |
 
 Validate the handoff against the import rules of each advertised provider before
 calling it portable. Keep conditional best practices in the relevant skill or

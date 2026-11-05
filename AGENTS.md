@@ -17,6 +17,12 @@ campaign CSV, or an inactive remote draft, read
 `.agents/skills/ac-campaign/SKILL.md`. Claude Code discovers it through
 `.claude/skills/ac-campaign`.
 
+For catching burned or spam-placed mailboxes in live campaigns, swap proposals,
+Slack approvals, standby pools, refill recommendations, or the weekly swap summary,
+read `.agents/skills/ac-swap/SKILL.md`. Claude Code discovers it through
+`.claude/skills/ac-swap`. Swap state is fleet-wide and lives in the Git-ignored
+`swap/` workspace, never inside a run.
+
 For development, keep this kit portable and project-scoped. Preserve unrelated
 client settings. Never commit credentials, OAuth sessions, or customer run data.
 Do not embed internal production access or shared company tokens.

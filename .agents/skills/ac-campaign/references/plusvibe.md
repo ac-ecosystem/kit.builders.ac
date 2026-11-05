@@ -2,7 +2,8 @@
 
 Use this procedure only when builders.ac identifies PlusVibe as the connected
 sequencer and an authenticated PlusVibe MCP is already loaded in the current
-agent session. It records the PlusVibe MCP contract verified on 2026-09-27. Read
+agent session. It records the PlusVibe MCP contract verified on 2026-09-27
+(sender assignment rechecked on 2026-11-05). Read
 the live tool descriptions and schemas before every mutation. If creation no
 longer guarantees a draft or a later operation can activate it implicitly, stop
 and record the blocker instead of guessing.
@@ -41,8 +42,12 @@ and record the blocker instead of guessing.
    must be today or later. Include only active day keys set to `true`; never
    include an inactive day with `false`.
 6. Call `set_campaign_email_accounts` once with the complete reviewed sender
-   set. `account_list` takes sender email addresses, not account IDs, and
-   replaces the campaign's full sender set.
+   set. `account_list` takes sender email addresses, not account IDs. Since
+   2026-11-05 the tool adds addresses to the campaign's current senders and
+   keeps the existing ones; it no longer replaces the set. A new draft has no
+   senders, so the result should equal the reviewed set. Confirm that with
+   `get_campaign_email_accounts`. If an address appears that this run did not
+   add, stop and record it instead of removing it.
 7. After configuration, call `get_campaign_status` again and require `DRAFT`
    before importing any leads.
 
