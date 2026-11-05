@@ -76,14 +76,15 @@ Say **"set up ac-swap"** (or `/ac-swap setup`). The agent will:
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | Bounce rate | 4.5% over 3 days, at least 50 sent | Flags one mailbox |
+| Domain bounce (sequencer) | 5% across a domain's mailboxes, at least 200 sent | Flags every mailbox on the domain; catches low-volume fleets |
 | Placement | any seed in spam | Flags one mailbox |
 | Blacklist | domain listed | Flags every mailbox on the domain (builders.ac domains) |
-| Domain bounce | 5%, at least 200 sent | Flags every mailbox on the domain (builders.ac domains) |
+| Domain bounce (builders.ac) | 5%, at least 200 sent | Flags every mailbox on the domain (builders.ac domains) |
 | Domain rule | 2 flagged mailboxes | Flags every mailbox on the domain |
-| List guard | half a campaign's mailboxes bouncing | Treats it as a list problem, no swap |
+| List guard | half a campaign's mailboxes bouncing, mostly recipient-side campaign bounces, or a campaign the sequencer paused for bounces | Treats it as a list problem, no swap |
 | Ready | 15 days warming | When a Standby can be used |
 | Pool floor | 10% of live mailboxes per ESP | When to refill |
-| Ramp for a promoted standby | 10/day, +2/day, cap 30, 15 min apart | Sending limits after a swap |
+| Limits for a promoted standby | same daily limit and interval as the mailbox it replaces | Never sends more than its predecessor; ramps from 10/day (+2/day) when that limit is higher |
 
 ## How it runs
 
@@ -130,7 +131,7 @@ For each approved mailbox, oldest flag first:
 
 1. Picks the oldest Ready standby from the same ESP, never on the same domain as a
    flagged mailbox.
-2. Sets its sending limits and ramp.
+2. Gives it the same daily limit and interval as the mailbox it replaces.
 3. Adds it to every campaign the flagged mailbox was in, and confirms it is there.
 4. Only then removes the flagged mailbox, so campaign capacity never drops.
 5. Moves the tags: the standby loses `standby`, the flagged mailbox gets

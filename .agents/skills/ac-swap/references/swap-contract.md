@@ -37,15 +37,16 @@ Each reference also states:
 ## Standby modes
 
 - `standby_mode: tag` (default): a Standby carries the customer's standby tag, sits
-  in no active campaign, and has warmup on. Promoting it removes the tag.
+  in no active campaign, and has warmup on. Attachments to paused, completed or
+  draft campaigns do not disqualify it. Promoting it removes the tag.
 - `standby_mode: implicit`: for sequencers without tag tools. Any warmed mailbox in
   no active campaign is a Standby, except mailboxes on `standby_exclusions`. Every
   proposal names the candidate standbys in this mode so a person can veto one.
 
 A Standby is Ready once `ready_days` have passed since warmup started. Use the
-`warmup_started_at` recorded at intake. For mailboxes taken in before `ac-swap`
-existed, use the earliest warmup activity the sequencer reports, and say in the
-dashboard that the date is estimated.
+start date recorded at intake. For mailboxes taken in before `ac-swap` existed,
+use the warmup-enabled date the sequencer reports, and say in the dashboard that
+the date is estimated. An unknown date means not Ready.
 
 ## ESP
 

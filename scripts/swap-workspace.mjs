@@ -9,6 +9,7 @@ export const actionHeader = 'action_key,proposal_id,at,mode,step,mailbox,esp,cam
 const proposalStatuses = ['pending', 'needs_decision', 'approved', 'rejected', 'expired', 'executed', 'failed'];
 const actionSteps = ['flag', 'set_ramp', 'attach', 'verify', 'detach', 'untag_campaign', 'untag_standby', 'tag_swapped_out', 'intake_tag', 'intake_warmup', 'refill', 'placement_start', 'placement_result'];
 const actionResults = ['done', 'skipped', 'failed', 'dry_run'];
+const numericConfig = ['ready_days', 'bounce_window_days', 'bounce_rate_threshold', 'bounce_min_sends', 'domain_bounce_rate_threshold', 'domain_bounce_min_sends', 'campaign_list_recipient_share', 'domain_flagged_mailboxes', 'list_suspected_share', 'placement_min_seeds', 'placement_max_senders', 'pool_floor_share', 'proposal_expiry_hours'];
 const requiredConfig = ['mode', 'sequencer', 'sequencer_workspace_id', 'approval_channel', 'approvers', 'standby_mode', 'standby_tag', 'swapped_out_tag', 'ready_days', 'bounce_window_days', 'bounce_rate_threshold', 'bounce_min_sends', 'pool_floor_share', 'proposal_expiry_hours', 'timezone', 'updated_at'];
 
 function fail(message) {
@@ -40,11 +41,14 @@ bounce_rate_threshold: 0.045
 bounce_min_sends: 50
 domain_bounce_rate_threshold: 0.05
 domain_bounce_min_sends: 200
+campaign_list_recipient_share: 0.7
 domain_flagged_mailboxes: 2
 list_suspected_share: 0.5
 placement_min_seeds: 1
+placement_max_senders: 200
 placement_content: neutral
 pool_floor_share: 0.10
+ramp_target: inherit
 ramp: { daily_limit: 30, rampup_daily_limit: 10, rampup_daily_inc: 2, interval_limit_in_min: 15 }
 proposal_expiry_hours: 24
 schedule: { scan: "07:00 daily", placement: "06:00 Mon,Thu", decide: "every 2h 08:00-20:00" }
@@ -145,6 +149,14 @@ export async function check(directory) {
   }
   if (keys.has('mode') && !['dry-run', 'live'].includes(keys.get('mode'))) fail(`${label}/swap.md mode must be dry-run or live`);
   if (keys.has('standby_mode') && !['tag', 'implicit'].includes(keys.get('standby_mode'))) fail(`${label}/swap.md standby_mode must be tag or implicit`);
+  if (keys.has('ramp_target') && !['inherit', 'fixed'].includes(keys.get('ramp_target'))) fail(`${label}/swap.md ramp_target must be inherit or fixed`);
+  for (const key of numericConfig) {
+    if (keys.has(key) && !/^\d+(?:\.\d+)?$/.test(keys.get(key))) fail(`${label}/swap.md ${key} must be a number`);
+  }
+  const approvers = keys.get('approvers') ?? '';
+  const noApprovers = /^\[\s*\]$/.test(approvers) || /pending|todo|tbd/i.test(approvers);
+  if (keys.get('mode') === 'live' && noApprovers) fail(`${label}/swap.md: live mode needs at least one real Approver`);
+  else if (noApprovers) console.warn(`${label}/swap.md: no Approvers named yet; setup is not finished`);
 
   const proposals = await readFile(resolve(directory, 'proposals.csv'), 'utf8');
   if (proposals.split(/\r?\n/, 1)[0] !== proposalHeader) fail(`${label}/proposals.csv header does not match the swap contract`);
