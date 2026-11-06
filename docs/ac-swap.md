@@ -11,10 +11,11 @@ It runs inside your own coding agent (Claude Code, Codex and others) through MCP
 connections you have already signed in to. Nothing is hosted, and no keys are
 stored in this kit. [ADR 0001](adr/0001-swap-engine-as-kit-skill.md) explains why.
 
-> **Video walkthrough:** _coming with the live demo_ (unlisted YouTube link and
-> release download will be added here).
+> **Video walkthrough (68 s, silent, captioned):** [download ac-swap-v0-demo.mp4](https://github.com/ac-ecosystem/kit.builders.ac/releases/download/ac-swap-v0/ac-swap-v0-demo.mp4)
+> from the `ac-swap-v0` release. It shows the live demo below on an internal
+> PlusVibe workspace; domains are blurred.
 
-<!-- screenshot: 00-overview.gif — short loop of proposal → approve → swap result -->
+![Proposal, approval, swap result](images/ac-swap/00-overview.gif)
 
 ## What it does and does not do
 
@@ -69,7 +70,7 @@ Say **"set up ac-swap"** (or `/ac-swap setup`). The agent will:
 8. Offer to schedule the three runs in your agent client.
 9. Create `swap/` and start in dry-run mode.
 
-<!-- screenshot: 01-setup-approvers.png — the Approver question with callouts: (1) names typed, (2) resolved Slack users, (3) confirmation -->
+![Settings written by setup: Approvers, proposal channel, standby tag and the demo switches](images/ac-swap/01-setup-config.png)
 
 ### Thresholds
 
@@ -101,7 +102,7 @@ Ask for any run by name at any time, for example "run swap scan now".
 Each proposal shows how many mailboxes leave per ESP, how many standbys come in,
 the reason and numbers for every flagged mailbox, and the campaigns affected.
 
-<!-- screenshot: 02-proposal.png — proposal message with callouts: (1) proposal id + expiry, (2) per-ESP counts, (3) reason + numbers per mailbox, (4) list-suspected campaigns, (5) the exact replies -->
+![A swap proposal in Slack, with callouts](images/ac-swap/02-proposal.png)
 
 Reply **in the thread** with one of:
 
@@ -117,13 +118,13 @@ reject <reason>
 - A proposal with no reply expires after 24 hours; the next scan proposes again
   with fresh numbers.
 
-<!-- screenshot: 03-approve-reply.png — thread with the approve reply and the agent's acknowledgement -->
+![An Approver replies approve in the thread](images/ac-swap/03-approve-reply.png)
 
 Before it acts, the agent re-checks that the flagged mailboxes are still in the
 same campaigns and that the pool still has enough Ready standbys. If anything
 changed, it posts the new list and waits for a fresh reply.
 
-<!-- screenshot: 04-recheck-and-result.png — "Re-check passed, executing" then the per-mailbox result -->
+![Re-check passed, then the per-mailbox result in the thread](images/ac-swap/04-recheck-and-result.png)
 
 ## What a swap does
 
@@ -141,7 +142,7 @@ If adding the standby fails, the flagged mailbox stays put and that pair is mark
 failed. Swapped-out mailboxes are listed for a person to decide on retirement;
 `ac-swap` never deprovisions them.
 
-<!-- screenshot: 05-plusvibe-before-after.png — campaign mailbox list before and after, callouts on the removed and added mailbox (addresses blurred) -->
+![The campaign's sending accounts in PlusVibe before (top) and after (bottom)](images/ac-swap/05-plusvibe-before-after.png)
 
 ## Keeping the pool full
 
@@ -152,7 +153,7 @@ failed. Swapped-out mailboxes are listed for a person to decide on retirement;
   mailboxes could finish warming (about 17 days), the agent posts how many to
   order. For builders.ac it includes a ready plan you can hand to `ac-infra`.
 
-<!-- screenshot: 06-refill-recommendation.png — runway numbers and the suggested order -->
+![Pool status and a tag-existing refill recommendation](images/ac-swap/06-refill-recommendation.png)
 
 ## The swap workspace
 
@@ -167,7 +168,7 @@ Everything lives in `swap/`, which Git ignores:
 See [`examples/swap/`](../examples/swap/swap.md) for a filled-in synthetic copy.
 Check it any time with `node scripts/swap-workspace.mjs check`.
 
-<!-- screenshot: 07-swap-md.png — dashboard with callouts on pool, runway and swapped-out list -->
+![The swap.md dashboard after the demo](images/ac-swap/07-swap-md.png)
 
 ## Weekly summary
 
@@ -175,7 +176,7 @@ Every Monday the scan posts one message, split by ESP: flags by reason; swaps
 executed, failed, rejected and expired; list-suspected campaigns; pool size and
 runway; and swapped-out mailboxes waiting for a retirement decision.
 
-<!-- screenshot: 08-weekly-summary.png -->
+The weekly summary posts on Mondays; the demo ran on a Friday, so none was captured.
 
 ## Going live
 
@@ -193,9 +194,12 @@ workspace. You get real flags and a real proposal, and nothing changes.
 
 **Part 2: live swap in a sandbox campaign.**
 
-1. A person creates one campaign, sets it active, and adds **no leads**, so it can
-   never send. `ac-swap` never creates campaigns.
-2. Attach five mailboxes to it and tag five Ready mailboxes `standby`.
+1. A person creates one campaign and sets it active. Give it **no leads**, so it
+   never sends, or only a handful of internal test recipients (your own address
+   and a few of your own mailboxes) to watch real sends move to the standbys.
+   `ac-swap` never creates campaigns.
+2. Attach five mailboxes to it and tag a few Ready mailboxes `standby`. Put the
+   standbys on a different domain from the mailboxes you will force-flag.
 3. In `swap.md`, set `demo: true` and list two attached mailboxes under
    `demo_force_flag`.
 4. Run `scan`: a proposal for two mailboxes appears in Slack.

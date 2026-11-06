@@ -283,5 +283,6 @@ Do not compare or rank suppliers.
 
 `swap.md` may list `demo_force_flag` mailboxes. They are treated as flagged with
 reason `demo` only while `demo: true` is set, and are ignored in every other run.
-The demo uses a campaign a person created with zero leads; this skill never
-creates one.
+They count toward the domain rule (Scan step 8) like a flag from steps 4–7. The
+demo uses a campaign a person created, with zero leads or only internal test
+recipients; this skill never creates one.
