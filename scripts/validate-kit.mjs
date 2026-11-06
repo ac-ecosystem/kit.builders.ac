@@ -21,6 +21,7 @@ for (const [name, files] of [
   ['ac-infra', ['SKILL.md', 'references/provisioning.md']],
   ['ac-prospecting', ['SKILL.md', 'references/treg.md']],
   ['ac-campaign', ['SKILL.md', 'references/campaign-contract.md']],
+  ['ac-swap', ['SKILL.md', 'references/swap-contract.md', 'references/plusvibe.md', 'references/slack-approval.md', 'references/deliverability.md']],
 ]) {
   const canonicalSkill = resolve(root, '.agents/skills', name);
   const claudeSkill = resolve(root, '.claude/skills', name);
@@ -50,6 +51,22 @@ for (const [name, contents] of [['README.md', readme], ['start.md', start]]) {
   assert(!contents.includes('https://builders.ac/start.md'), `${name} must not use a vendored start.md`);
   assert(!contents.includes('https://builders.ac/skills/'), `${name} must not use vendored skill files`);
   assert(!contents.includes('sync-kit.mjs'), `${name} must not reference the removed sync process`);
+}
+
+// The committed swap example must match the workspace contract and stay synthetic.
+const { check: checkSwap, allowedFiles: swapFiles } = await import('./swap-workspace.mjs');
+await checkSwap(resolve(root, 'examples/swap'));
+assert(process.exitCode !== 1, 'examples/swap must pass the swap workspace check');
+const gitignore = await readFile(resolve(root, '.gitignore'), 'utf8');
+assert(gitignore.split('\n').includes('/swap/'), '.gitignore must ignore the root /swap/ workspace');
+for (const file of swapFiles) {
+  const contents = await readFile(resolve(root, 'examples/swap', file), 'utf8');
+  for (const match of contents.matchAll(/@([a-z0-9.-]+\.[a-z]{2,})/gi)) {
+    assert(match[1].toLowerCase().startsWith('example-'), `examples/swap/${file}: ${match[1]} is not a synthetic example-* domain`);
+  }
+  for (const match of contents.matchAll(/\b([a-z0-9-]+\.(?:com|net|org|io|co|ai))\b/gi)) {
+    assert(match[1].toLowerCase().startsWith('example-'), `examples/swap/${file}: ${match[1]} is not a synthetic example-* domain`);
+  }
 }
 
 console.log('builders.ac kit validation passed');

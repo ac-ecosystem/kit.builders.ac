@@ -1,0 +1,21 @@
+action_key,proposal_id,at,mode,step,mailbox,esp,campaign,standby,result,detail
+sp-0001:dan@example-outreach.com:flag:Q4 founders,sp-0001,2026-11-05T00:02:00Z,dry-run,flag,dan@example-outreach.com,google,Q4 founders,,dry_run,placement 2 of 12 seeds in spam (Google)
+sp-0001:eve@example-outreach.com:flag:Q4 founders,sp-0001,2026-11-05T00:02:00Z,dry-run,flag,eve@example-outreach.com,google,Q4 founders,,dry_run,sender bounce 5.2% of 96 sent over 3 days
+sp-0001:finn@example-mail.net:flag:Agency outbound,sp-0001,2026-11-05T00:02:00Z,dry-run,flag,finn@example-mail.net,microsoft,Agency outbound,,dry_run,domain example-mail.net listed on a public blacklist
+sp-0002:ben@example-sender.com:flag:Demo zero leads,sp-0002,2026-11-06T00:03:00Z,live,flag,ben@example-sender.com,microsoft,Demo zero leads,,done,demo
+sp-0002:cara@example-sender.com:flag:Demo zero leads,sp-0002,2026-11-06T00:03:00Z,live,flag,cara@example-sender.com,microsoft,Demo zero leads,,done,demo
+sp-0002:ben@example-sender.com:set_ramp:-,sp-0002,2026-11-06T02:05:00Z,live,set_ramp,ben@example-sender.com,microsoft,,gia@example-mail.net,done,inherited 30/day and 15 min interval from the flagged mailbox; ramp 10 +2/day
+sp-0002:ben@example-sender.com:attach:Demo zero leads,sp-0002,2026-11-06T02:05:30Z,live,attach,ben@example-sender.com,microsoft,Demo zero leads,gia@example-mail.net,done,
+sp-0002:ben@example-sender.com:verify:Demo zero leads,sp-0002,2026-11-06T02:06:00Z,live,verify,ben@example-sender.com,microsoft,Demo zero leads,gia@example-mail.net,done,standby present in campaign
+sp-0002:ben@example-sender.com:detach:Demo zero leads,sp-0002,2026-11-06T02:06:30Z,live,detach,ben@example-sender.com,microsoft,Demo zero leads,gia@example-mail.net,done,
+sp-0002:ben@example-sender.com:untag_standby:-,sp-0002,2026-11-06T02:07:00Z,live,untag_standby,ben@example-sender.com,microsoft,,gia@example-mail.net,done,
+sp-0002:ben@example-sender.com:tag_swapped_out:-,sp-0002,2026-11-06T02:07:20Z,live,tag_swapped_out,ben@example-sender.com,microsoft,,gia@example-mail.net,done,
+sp-0002:cara@example-sender.com:set_ramp:-,sp-0002,2026-11-06T02:09:00Z,live,set_ramp,cara@example-sender.com,microsoft,,hal@example-mail.net,done,inherited 30/day and 15 min interval from the flagged mailbox; ramp 10 +2/day
+sp-0002:cara@example-sender.com:attach:Demo zero leads,sp-0002,2026-11-06T02:09:30Z,live,attach,cara@example-sender.com,microsoft,Demo zero leads,hal@example-mail.net,done,
+sp-0002:cara@example-sender.com:verify:Demo zero leads,sp-0002,2026-11-06T02:10:00Z,live,verify,cara@example-sender.com,microsoft,Demo zero leads,hal@example-mail.net,done,standby present in campaign
+sp-0002:cara@example-sender.com:detach:Demo zero leads,sp-0002,2026-11-06T02:10:30Z,live,detach,cara@example-sender.com,microsoft,Demo zero leads,hal@example-mail.net,done,
+sp-0002:cara@example-sender.com:untag_standby:-,sp-0002,2026-11-06T02:11:00Z,live,untag_standby,cara@example-sender.com,microsoft,,hal@example-mail.net,done,
+sp-0002:cara@example-sender.com:tag_swapped_out:-,sp-0002,2026-11-06T02:11:20Z,live,tag_swapped_out,cara@example-sender.com,microsoft,,hal@example-mail.net,done,
+intake:ivy@example-outreach.com:intake_tag:-,,2026-11-06T00:04:00Z,live,intake_tag,ivy@example-outreach.com,google,,,done,
+intake:ivy@example-outreach.com:intake_warmup:-,,2026-11-06T00:04:10Z,live,intake_warmup,ivy@example-outreach.com,google,,,done,warmup_started_at 2026-11-06
+refill:google:2026-11-06,,2026-11-06T00:05:00Z,live,refill,,google,,,skipped,runway 60 days; no refill needed
