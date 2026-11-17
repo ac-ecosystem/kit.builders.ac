@@ -4,7 +4,7 @@ The builders.ac MCP exposes the public
 [Deliverability API](https://docs.builders.ac/guides/deliverability/) as read-only
 tools. They cover domains owned by the authenticated builders.ac account; domains
 in invited workspaces and domains from other suppliers are not included. Use them
-only for domains that also carry mailboxes in Covered campaigns.
+only for domains in the inspected scope.
 
 If these tools are not listed in the session (an older builders.ac MCP, or a client
 that has not refreshed its tool list), skip the domain signals, say so in the
@@ -23,12 +23,12 @@ dashboard, and continue with sequencer signals only.
 
 1. **Blacklist.** From `getDeliverabilityChecks`, take every blacklist with status
    `listed`. For each, call `getDeliverabilityCheckResults` with `check` set to the
-   catalogue ID for that zone and today's date. Flag every covered mailbox on each
-   domain whose verdict is listed. Show the zone name in the proposal. Treat
+   catalogue ID for that zone and the inspected date. Report every inspected mailbox on each
+   domain whose verdict is listed. Show the zone name in the report. Treat
    `unknown` as no signal.
-2. **Domain bounce.** From `getDeliverabilityBounces`, flag every covered mailbox
-   on a domain whose `rate` is at least `domain_bounce_rate_threshold` and whose
-   `sent` is at least `domain_bounce_min_sends`. If `rate` is null, skip the domain
+2. **Domain bounce.** From `getDeliverabilityBounces`, report every inspected mailbox
+   on a domain whose `rate` is at least `bounce_threshold` and whose
+   `sent` is at least `bounce_min_sends`, over the matching configured window. If `rate` is null, skip the domain
    and show its `rate_unavailable` reason in the dashboard. If `sent_incomplete` is
    true, mention it next to the number.
 

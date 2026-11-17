@@ -67,16 +67,14 @@ matching MCP, it reports that the remote campaign cannot be created.
 
 ## Swapping burned mailboxes
 
-Invoke `ac-swap` to keep live campaigns on healthy mailboxes. It flags mailboxes
-with sustained bounces, spam placement or a blacklisted domain, posts a swap
-proposal to Slack, and after an Approver replies `approve` it moves the flagged
-mailboxes out of their campaigns and puts Ready standbys from a per-ESP pool in
-their place. It also takes new mailboxes into the pool, recommends refills before
-the pool runs short, and posts a weekly summary. It starts in dry-run mode, uses
-only MCP connections you have already authenticated (builders.ac, your sequencer,
-Slack), and never launches campaigns, sends email or deprovisions mailboxes.
-Read the [ac-swap guide](docs/ac-swap.md); a synthetic workspace is in
-[`examples/swap/`](examples/swap/swap.md).
+Invoke `ac-swap` for a manual-first fleet review. It combines DNS, warmup and
+bounce evidence, explains primary/catch-all/standby pools, and forecasts how a
+replacement and refill would work. Each run produces local Markdown and HTML
+reports with a system overview, scenario walkthrough, timeline and evidence.
+No Slack connection or database is required. Dry-run makes no external changes;
+proposed pool assignments are never execution authorization. Scheduling is
+optional and created only on request. Read the [ac-swap guide](docs/ac-swap.md)
+and the [synthetic report](examples/swap/report.html).
 
 ## Connection model
 
@@ -125,7 +123,7 @@ tests authenticated tool calls. See [the acceptance checklist](docs/acceptance.m
 - `.claude/skills/ac-infra`: relative link for Claude Code discovery.
 - `.agents/skills/ac-prospecting/`: canonical sourcing and verification skill.
 - `.agents/skills/ac-campaign/`: canonical campaign planning, CSV, and inactive remote-draft skill.
-- `.agents/skills/ac-swap/`: canonical mailbox swap skill with sequencer, Slack and Deliverability references.
+- `.agents/skills/ac-swap/`: canonical mailbox swap skill with sequencer and Deliverability references.
 - `.claude/skills/`: links to every canonical skill for Claude Code discovery.
 - `.mcp.json` and `.codex/config.toml`: project-scoped, credential-free MCP settings.
 - `docs/run-artifacts.md`: fixed private artifacts shared by every phase.

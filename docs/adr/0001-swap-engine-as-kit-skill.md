@@ -2,26 +2,26 @@
 status: accepted
 ---
 
-# Swap engine V0 is a kit skill; a hosted service comes later
+# Swap V0 is an agent skill with local reports
 
-The V0 swap engine (detect burned mailboxes, get a human approval, swap in warmed
-standbys, replenish) ships as a kit skill, `ac-swap`, that runs in the customer's
-own agent. It works only through MCP connections the customer has already
-authenticated (builders.ac, their sequencer, Slack). Each sequencer gets a
-reference file that maps the swap contract onto that vendor's tools. Approval is a
-reply in a Slack thread, which the next run reads before acting. It is not an
-interactive button.
+V0 runs in the customer's agent through already authenticated sequencer and
+optional builders.ac MCP connections. The agent collects evidence; an offline
+helper calculates pool recommendations and renders a local system/scenario
+report. No database, worker, hosted dashboard or Slack app is needed.
 
-We chose this over shipping a runnable worker plus a Slack app in this repository.
-The kit is public, holds no credentials, and has no server to receive Slack button
-clicks or run on a schedule. A worker would break all three properties. A skill
-proves the swap loop on real data now. Scheduled runs, Slack buttons and a held
-standby pool move to a hosted builders.ac service (V5/V10) once the loop is proven.
+The workflow is manual-first and starts in dry-run. One run replaces the former
+scan/placement/decide loop. Slack approvals and the proposal queue were removed
+from V0 on 2026-11-17. A live procedure requires explicit user authorization and
+configured scope, but per-swap Slack decisions are not part of it.
 
 ## Consequences
 
-- Scheduling is the customer's responsibility (a routine or scheduled task in their
-  agent client), so run cadence is best effort in V0.
-- Approval latency equals the gap between runs. A reply only takes effect on the
-  next run.
-- Adding a sequencer means adding one reference file, not changing the skill.
+- A report can explain and forecast a real incident without live changes or a
+  known backup inventory, provided assumptions remain explicit.
+- Provisional pool mapping is inspectable and repeatable, not optimized or
+  automatically deployed.
+- Each run stores normalized evidence, a latest Markdown/HTML report, a summary
+  history and a separate action journal. Detailed old reports are not archived.
+- Scheduling is optional and created only on request through the agent client.
+- A later service may own reliable scheduling, shared state and replenishment;
+  V0 does not claim those capabilities.

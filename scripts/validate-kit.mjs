@@ -21,7 +21,7 @@ for (const [name, files] of [
   ['ac-infra', ['SKILL.md', 'references/provisioning.md']],
   ['ac-prospecting', ['SKILL.md', 'references/treg.md']],
   ['ac-campaign', ['SKILL.md', 'references/campaign-contract.md']],
-  ['ac-swap', ['SKILL.md', 'references/swap-contract.md', 'references/plusvibe.md', 'references/slack-approval.md', 'references/deliverability.md']],
+  ['ac-swap', ['SKILL.md', 'references/swap-contract.md', 'references/plusvibe.md', 'references/deliverability.md']],
 ]) {
   const canonicalSkill = resolve(root, '.agents/skills', name);
   const claudeSkill = resolve(root, '.claude/skills', name);
