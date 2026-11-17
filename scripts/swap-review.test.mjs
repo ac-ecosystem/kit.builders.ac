@@ -4,6 +4,7 @@ import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defaults, generateReport, htmlReport, readConfig, review, validateSnapshot } from './swap-review.mjs';
+import { simulate, simulationMarkdown } from './swap-simulation.mjs';
 import { forecast, reportStamp } from './swap-scenarios.mjs';
 import { check, init, parseCsv } from './swap-workspace.mjs';
 
@@ -150,4 +151,41 @@ test('legacy journals are not overwritten by init', async () => {
     await assert.rejects(init(dir), /legacy/);
     assert.equal(await readFile(join(dir, 'proposals.csv'), 'utf8'), 'old journal');
   } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('simulation verifies all replacements before removing the source', () => {
+  const r = review(clone(), config()); const result = simulate(r);
+  const verified = result.steps.findIndex((x) => x.event === 'Verify all replacement attachments');
+  const detached = result.steps.findIndex((x) => x.event === 'Remove source; verify final membership');
+  assert.ok(verified < detached);
+  assert.equal(result.steps[verified].sourceAssigned, result.replacements);
+  assert.equal(result.steps[verified].assigned, result.baseline + result.replacements);
+  assert.equal(result.state.assigned, result.baseline);
+  assert.equal(result.state.sourceAssigned, 0);
+  assert.equal(result.state.recovery, result.replacements);
+  assert.equal(result.state.ready, result.remaining + result.refill);
+});
+
+test('failed verification keeps the source and exposes partial attachments', () => {
+  const result = simulate(review(clone(), config()), { failVerification: true });
+  assert.equal(result.success, false);
+  assert.equal(result.state.sourceAssigned, result.replacements);
+  assert.equal(result.state.replacementAssigned, Math.floor(result.replacements / 2));
+  assert.equal(result.state.assigned, result.baseline + result.state.replacementAssigned);
+  assert.equal(result.state.recovery, 0);
+  assert.equal(result.state.warming, 0);
+  assert.equal(result.state.requested, 0);
+});
+
+test('simulation is deterministic and never changes the observed snapshot', () => {
+  const s = clone(), before = JSON.stringify(s), r = review(s, config());
+  assert.deepEqual(simulate(r), simulate(r));
+  assert.equal(JSON.stringify(s), before);
+});
+
+test('a report with no qualifying incident does not invent a replacement', () => {
+  const s = clone(); s.domains = s.domains.filter((d) => d.domain !== 'example-decline.com'); s.daily_warmup = [];
+  const r = review(s, config());
+  assert.equal(simulate(r), null);
+  assert.match(simulationMarkdown(r), /No qualifying warmup incident/);
 });

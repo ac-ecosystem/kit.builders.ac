@@ -64,7 +64,7 @@ Use [builders.ac signals](references/deliverability.md) when its MCP is availabl
    warmup timeline when available. Resolve lane labels from explicit config
    first; campaign-name inference must be labeled. Missing lane = unknown.
 5. Run node scripts/swap-workspace.mjs report. It derives domain health and a
-   provisional domain-level mapping, writes the latest swap.md and report.html,
+   provisional domain-level mapping, writes report.md (the primary Mermaid walkthrough), report.html, and a swap.md link,
    and records one run summary in runs.csv. Re-rendering the same run must not
    duplicate history. The helper has no network calls or mutation capability.
 6. In dry-run, stop here. Show the report link and key findings. Identify actual
@@ -82,3 +82,10 @@ Use [builders.ac signals](references/deliverability.md) when its MCP is availabl
 A simple first showcase uses real deterioration, a configuration-only issue and
 an isolation conflict. Keep the observed view and proposed allocation side by
 side. Rehearsed replacements and hypothetical capacity are labeled throughout.
+
+## Presentation
+
+Lead with one executed local simulation: observed incident → model assumptions →
+pool movements → step-by-step membership counts → failure branch → refill math.
+Use Mermaid and compact tables in report.md. Keep unrelated fleet diagnostics in
+the secondary HTML report. Never present the local model as provider execution.

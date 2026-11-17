@@ -7,8 +7,10 @@ queue. Scheduling is optional and created only when requested.
 
 ## The report
 
-Open swap/report.html locally or read swap/swap.md in your agent. The HTML is
-standalone, contains no external assets and can be printed to PDF.
+Open swap/report.md in a Mermaid-capable Markdown viewer. It walks through one
+local simulation using observed health and campaign membership, with explicit
+standby assumptions, model state transitions and a deliberate verification-failure
+branch. swap/report.html remains a secondary fleet diagnostic view.
 
 The report explains:
 1. The system: PlusVibe evidence → health rules → pool assignments → replacement
@@ -86,7 +88,8 @@ orders infrastructure and warms new backups. No order is placed by this kit.
 
 | File | Purpose |
 | --- | --- |
-| swap.md | Settings plus the latest human-readable report |
+| swap.md | Settings and a link to the walkthrough |
+| report.md | Primary simulation walkthrough with Mermaid and state tables |
 | snapshot.json | Minimal normalized evidence |
 | report.html | System overview, pool map, scenarios and evidence |
 | runs.csv | Summary history; rendering a run twice updates its row |

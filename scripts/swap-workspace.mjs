@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { defaults, generateReport, readConfig, validateSnapshot } from './swap-review.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-export const allowedFiles = ['swap.md', 'snapshot.json', 'runs.csv', 'actions.csv', 'report.html'];
+export const allowedFiles = ['swap.md', 'snapshot.json', 'runs.csv', 'actions.csv', 'report.md', 'report.html'];
 export const runHeader = 'run_id,observed_at,mode,mailboxes,attention_domains,mixed_domains,verified_standby_mailboxes';
 export const actionHeader = 'action_key,run_id,at,mode,step,mailbox,esp,campaign,standby,result,detail';
 const steps = ['flag', 'set_ramp', 'attach', 'verify', 'detach', 'verify_detach', 'untag_campaign', 'untag_standby', 'tag_swapped_out', 'refill'];
@@ -35,7 +35,7 @@ export async function check(directory) {
   const entries = (await readdir(directory)).filter((name) => name !== '.DS_Store');
   if (entries.includes('proposals.csv')) throw new Error(label + ': legacy workspace; preserve it in .kit/ before migration, never overwrite its journal');
   assert(entries.every((entry) => allowedFiles.includes(entry)), label + ': unexpected swap artifact');
-  for (const file of allowedFiles) assert(entries.includes(file) && (await lstat(resolve(directory, file))).isFile(), label + ': missing regular file ' + file);
+  for (const file of allowedFiles.filter((file) => file !== 'report.md')) assert(entries.includes(file) && (await lstat(resolve(directory, file))).isFile(), label + ': missing regular file ' + file);
   const { config } = readConfig(await readFile(resolve(directory, 'swap.md'), 'utf8'));
   const snapshot = JSON.parse(await readFile(resolve(directory, 'snapshot.json'), 'utf8'));
   if (snapshot !== null) {
@@ -87,6 +87,7 @@ export async function init(directory) {
   };
   const files = {
     'swap.md': '---\n' + Object.entries(config).map(([k, v]) => k + ': ' + JSON.stringify(v)).join('\n') + '\n---\n\n# Fleet review\n\nNot run yet. Collect a snapshot using ac-swap, then run the report command.\n',
+    'report.md': '# Swap simulation\n\nNot run yet.\n',
     'snapshot.json': 'null\n', 'runs.csv': runHeader + '\n', 'actions.csv': actionHeader + '\n',
     'report.html': '<!doctype html><html lang="en"><meta charset="utf-8"><title>Fleet review</title><h1>Not run yet</h1><p>Collect evidence using ac-swap, then generate the report.</p></html>\n',
   };
@@ -108,7 +109,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       await check(directory);
       const r = await generateReport(directory);
       await check(directory);
-      console.log('Report: ' + resolve(directory, 'report.html'));
+      console.log('Report: ' + resolve(directory, 'report.md'));
       console.log(r.totals.attention + ' domains need attention; no external changes performed');
     }
   } catch (error) {

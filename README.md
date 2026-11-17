@@ -74,7 +74,7 @@ reports with a system overview, scenario walkthrough, timeline and evidence.
 No Slack connection or database is required. Dry-run makes no external changes;
 proposed pool assignments are never execution authorization. Scheduling is
 optional and created only on request. Read the [ac-swap guide](docs/ac-swap.md)
-and the [synthetic report](examples/swap/report.html).
+and the [synthetic simulation](examples/swap/report.md).
 
 ## Connection model
 

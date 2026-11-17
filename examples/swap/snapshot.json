@@ -310,5 +310,6 @@
       "promotion": 0,
       "sent": 500
     }
-  ]
+  ],
+  "evidence_kind": "synthetic"
 }
