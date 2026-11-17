@@ -64,7 +64,7 @@ sequenceDiagram
     P-->>M: 850 assigned - source in recovery
     M->>W: Request 45 mailboxes to restore reserve
   else Any verification fails
-    Note over M,P: Keep source attached; record partial attachments
+    Note over M,P: Keep source attached and record partial attachments
   end
 ```
 

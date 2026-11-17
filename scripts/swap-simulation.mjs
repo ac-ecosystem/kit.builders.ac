@@ -95,7 +95,7 @@ export function sequenceDiagram(r) {
     '    P-->>M: ' + sim.baseline + ' assigned - source in recovery',
     '    M->>W: Request ' + sim.refill + ' mailboxes to restore reserve',
     '  else Any verification fails',
-    '    Note over M,P: Keep source attached; record partial attachments',
+    '    Note over M,P: Keep source attached and record partial attachments',
     '  end',
   ].join('\n');
 }
