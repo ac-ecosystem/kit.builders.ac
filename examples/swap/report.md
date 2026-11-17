@@ -61,7 +61,7 @@ sequenceDiagram
   M->>P: Verify every replacement
   alt All replacements verified
     M->>P: Remove 50 source mailboxes
-    P-->>M: 850 assigned; source in recovery
+    P-->>M: 850 assigned - source in recovery
     M->>W: Request 45 mailboxes to restore reserve
   else Any verification fails
     Note over M,P: Keep source attached; record partial attachments

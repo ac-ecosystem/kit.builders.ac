@@ -92,7 +92,7 @@ export function sequenceDiagram(r) {
     '  M->>P: Verify every replacement',
     '  alt All replacements verified',
     '    M->>P: Remove ' + sim.replacements + ' source mailboxes',
-    '    P-->>M: ' + sim.baseline + ' assigned; source in recovery',
+    '    P-->>M: ' + sim.baseline + ' assigned - source in recovery',
     '    M->>W: Request ' + sim.refill + ' mailboxes to restore reserve',
     '  else Any verification fails',
     '    Note over M,P: Keep source attached; record partial attachments',
