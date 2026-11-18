@@ -1,121 +1,78 @@
 # PlusVibe mapping for ac-swap
 
-Use this only when builders.ac shows PlusVibe as the connected sequencer and an
-authenticated PlusVibe MCP is already loaded in the session. It records the
-PlusVibe MCP contract read on 2026-11-05. Read the live tool descriptions and
-schemas before every mutation; stop and record any difference.
+Use an already authenticated PlusVibe MCP. Check the workspace with
+get_workspaces. Tool schemas take precedence; this mapping was checked on
+2026-11-17. The report helper is offline; the agent makes these calls.
 
-Every tool takes `workspace_id`. Resolve it once with `get_workspaces` during setup
-and check it at the start of every run.
+## Collect evidence
 
-## Capabilities
-
-| Swap contract capability | PlusVibe tool | Notes |
+| Need | Tool | Important details |
 | --- | --- | --- |
-| List workspaces | `get_workspaces` | |
-| List mailboxes | `list_email_accounts` | Filter by `tags` (comma-separated tag IDs) or `email`; page with `limit`/`skip`. Each account has `payload.warmup`, `in_recovery`, `payload.daily_limit`, `payload.campaign_limit_today`, `payload.sending_rampup` |
-| Per-mailbox totals | `get_bulk_email_account_stats` | Up to 100 mailboxes per page, max 90 days; pass `include_chart=false`. Header fields include `total_sent_count`, `total_bounce_count`, `bounce_rate`, `reply_rate`, and since 2026-09-14 `sender_bounce_rate` and `recipient_bounce_rate` |
-| List campaigns | `list_campaigns` | Always pass `status=ACTIVE`, `campaign_type=parent` and a small `limit`: each campaign carries its full sequence bodies. Campaign rows include `sender_bounced_count`, `recipient_bounced_count`, `sent_count`, `is_pause_on_bouncerate`, `bounce_rate_limit`, `is_paused_at_bounced`, `email_accounts_count` |
-| Campaign mailboxes | `get_campaign_email_accounts` | Returns bare email addresses only (no account IDs, provider or tags). Resolve them as described under "Resolving mailboxes" |
-| Attach | `add_campaign_email_account` | One address per call; keeps existing accounts |
-| Detach | `remove_campaign_email_account` | One address per call. Refused for a mailbox that is on the campaign through a tag; the error names the tag |
-| Limits and ramp | `update_email_account` | Requires `id` (24-hex account ID), `first_name`, `daily_limit`, `interval_limit_in_min`. Copy `first_name` from `list_email_accounts`. Ramp: `is_slow_rampup: "yes"`, `rampup_daily_limit`, `rampup_daily_inc`; their sum must not exceed `daily_limit`. Leave `force_exit_recovery` at its default |
-| Warmup on | `enable_warmup` | One address per call |
-| Warmup results | `get_bulk_warmup_stats` | Max 14 days; `inbox_percent`, `spam_percent`, `google_percent`, `microsoft_percent` |
-| Tags | `list_tags`, `create_tag`, `bulk_assign_tags` (`ASSIGN` / `UNASSIGN`) | Tag names are case-insensitive and unique. `list_tags` shows `camp_count`: if the standby tag has a non-zero `camp_count`, a campaign uses it for membership. Stop and tell the user |
-| Placement test | `create_email_placement_test`, `update_email_placement_test`, `list_email_placement_test_runs`, `get_email_placement_test_run_detail`, `get_email_placement_test_automatic_result` | See below |
+| Workspaces | get_workspaces | Resolve the intended company workspace, not every accessible client |
+| Campaigns | list_campaigns | campaign_type=parent; include relevant ACTIVE, COMPLETED, PAUSED and DRAFT records for review; small pages because sequence bodies are large |
+| Membership | get_campaign_email_accounts | Bare address array; current assignment, not historical sending proof |
+| Inventory | list_email_accounts | Use exact domain, exact email or tag filter; returns accounts; provider is top-level |
+| Mailbox sending stats | get_bulk_email_account_stats | Target up to 100 email_acc_ids, include_chart=false; accounts array, each with header totals |
+| Warmup | get_bulk_warmup_stats | Same targeting, include_chart=false; max 14 dates and 14-day retention; use seven complete dates |
+| Authentication checks | check_email_account_health | accounts takes EMAIL ADDRESSES, not domains; a domain representative is diagnostic context only; check each selected source/standby address before live use; success_list carries spf/dkim/dmarc/mx booleans even when checks failed |
+| Sending proof | list_all_leads then get_campaign_emails | Resolve lead email_account_id to a sender; read actual messages and sent_on/eaccount for attribution; do not save message bodies or lead PII in reports |
+| Tags | list_tags | ea_count and camp_count describe usage; a tag change can modify campaign membership |
+| Existing placement results | list_email_placement_tests and result readers | Read-only context; no new seed sends in this workflow |
 
-## Resolving mailboxes
+All cursor-paged tools require starting_after="" first, then
+next_starting_after while has_more=true. Do not use removed skip/page
+pagination. Empty campaign responses may be {}. Normalize the actual response
+shape, preserve failed/partial requests, and stop if the cursor does not advance.
 
-Statistics tools need 24-hex account IDs, and the ESP comes from each account's
-top-level `provider` field. To get both for a campaign's mailboxes:
+Resolve each account ID from the filtered inventory. Payload cmps lists assigned
+campaign IDs/names, but does not prove their active state. Resolve status before
+calling inventory unused. A mailbox committed to a draft is not freely available.
 
-- If every mailbox in the campaign carries one shared tag, call
-  `list_email_accounts` with that tag's ID and page through it.
-- Otherwise call `list_email_accounts` with `email=` per address. Each account's
-  `payload.cmps` lists the campaigns (`id`, `name`) it is attached to, which also
-  answers "is this mailbox in an active campaign".
+## Units, dates and interpretation
 
-`list_email_accounts` returns about 4–6 KB per account and no total count, so
-never page through a whole large workspace with it. Use a `tags` filter (the
-standby tag keeps the pool query small). For wide sweeps use
-`get_bulk_email_account_stats` or `get_bulk_warmup_stats`, which are about 0.7 KB
-and 0.4 KB per row; bulk stats also reports `total_accounts`.
+- Provider MICROSOFT365 maps to microsoft. Confirm exact GOOGLE* values before
+  mapping to google. Unknown/SMTP ESPs remain unknown for V0.
+- Sending rates are percentages; policy values are fractions. Prefer raw counts.
+  sender_bounce_count and recipient_bounce_count are separate; available since
+  2026-09-14. Zero sends means an unavailable rate, not healthy delivery.
+- Account totals are workspace-level, not campaign-specific. Membership plus
+  workspace totals cannot establish which campaign actually sent.
+- Warmup inbox rate is inbox / (inbox + spam + promotion), matching classified
+  outcomes. Display unclassified sent counts separately. Aggregate counts across
+  a domain for context; retain each mailbox separately for swap decisions. Do not
+  average mailbox percentages or replace peers from a domain aggregate.
+- get_bulk_warmup_stats chart_data uses dt for ISO date and date for display.
+  Daily records have sent/inbox/spam/promotion. Sending chart records use date
+  for ISO date and total_sent_count for volume.
+- An empty warmup-enabled date means unknown. A re-enable date may be estimated.
+  Fourteen days of retained warmup cannot prove the 15-day readiness requirement.
+- A provider DNS false is a failed check, not proof that the record is absent.
+  Cross-check with read-only public DNS if useful. Duplicate DMARC records and
+  source disagreement should be reported precisely; do not silently fix DNS.
+- Current DNS health is not historical message authentication or inbox placement.
+  Readiness requires fresh evidence, not payload.analytics.health_scores=-1.
+- capacity_today comes from payload.campaign_limit_today. Configured daily_limit
+  is a cap; rest_cycles, ramp/randomization and other campaigns affect capacity.
+  Rotation is outside this workflow; preserve settings and respect the reported capacity.
 
-ESP map for `provider`: `MICROSOFT365` → `microsoft`; a value starting with
-`GOOGLE` → `google` (confirm the exact value on first sight and record it in
-`swap.md`); anything else, such as `REGULAR_ACCOUNT` (SMTP), → report as unclear
-and never swap.
+Record verified prior Catch-all use at domain level in swap.md. Never erase this
+when campaign membership disappears. Primary standbys require verified clean
+history across the domain; unknown is not clean.
 
-## Reading bounce numbers
+## Authorized execution only
 
-- `bounce_rate`, `sender_bounce_rate` and `recipient_bounce_rate` are percents
-  (`100` means 1 of 1). `swap.md` thresholds are fractions, so compare
-  `sender_bounce_rate` with threshold × 100.
-- The sender/recipient split is reported as 0 when nothing was sent. Skip a
-  mailbox whose `total_sent_count` is 0 rather than reading its rates.
-- For domain bounce flags, add `total_sent_count` and `sender_bounce_count` per
-  domain and compute the rate yourself.
-- Do not use `payload.analytics.health_scores.*` fields: they report `-1` for no
-  data and were observed staying `-1` on mailboxes that had bounces.
+Attach using add_campaign_email_account (one address, additive), then verify with
+get_campaign_email_accounts. Remove using remove_campaign_email_account.
+Tag-attached sources require removing the membership tag, which can affect every
+campaign using it; skip any operation outside the authorized include list.
 
-## Readiness
+update_email_account requires account ID, first_name, daily_limit and
+interval_limit_in_min. Preserve force_exit_recovery=0. Ramp start + increment
+must not exceed the inherited cap; do not apply a 10/day ramp to a 2/day source.
 
-Use the warmup start date recorded at intake. For mailboxes taken in before
-`ac-swap`, fall back to `payload.warmup_enb_dt` (the last time warmup was
-enabled, which may be a bulk re-enable) and mark the date as estimated. An empty
-string means unknown, not "today". Warmup statistics only cover 14 days, so they
-cannot prove 15 days of warming on their own.
+bulk_assign_tags ASSIGN/UNASSIGN changes membership for tag-driven campaigns.
+Never put a standby into a campaign membership tag before the exact impact is
+known. Do not change warmup or rest settings as part of a review.
 
-## Tag-attached mailboxes
-
-`bulk_assign_tags` says campaigns that use a tag update their mailbox lists
-automatically when the tag changes. So:
-
-- Detaching a tag-attached flagged mailbox means `UNASSIGN` of that campaign tag on
-  the mailbox. That removes it from every campaign using the tag, which is the
-  intended result. List those campaigns in the action rows.
-- Never assign a campaign membership tag to a standby during a swap. Attach
-  standbys one by one with `add_campaign_email_account`.
-
-## Ramp for a promoted standby
-
-Defaults from `swap.md`: `daily_limit` 30, `rampup_daily_limit` 10,
-`rampup_daily_inc` 2, `interval_limit_in_min` 15. Check that
-`rampup_daily_limit + rampup_daily_inc <= daily_limit` before calling. Read the
-account first and keep its current `first_name`.
-
-## Placement tests (live mode only)
-
-1. `create_email_placement_test` with `type: ONE_OFF` and a name such as
-   `ac-swap <date>`. It is created in `DRAFT`.
-2. `update_email_placement_test` while still in draft: `throttle: SEQUENTIAL` with
-   `min_intv`, `content_config` with a neutral subject and body (or the campaign's
-   copy when `placement_content: campaign`), `sender_config` with the explicit
-   sender list, and the seed `recipient_config` the tool requires. Then set
-   `status: ACTIVE` to run it once. A one-off test cannot be edited after it starts.
-3. Record the parent test ID in the dashboard. Do not wait.
-4. The next `decide` run calls `list_email_placement_test_runs` and
-   `get_email_placement_test_run_detail` to see whether the run finished (statuses
-   include `ERROR` and `INACTIVE`; the run detail's own `result` list can be empty),
-   then `get_email_placement_test_automatic_result` once per sender. Each sender's
-   result is split by recipient provider (`GOOGLE`, `MICROSOFT`) with
-   `inbox_count` and `spam_count`. Spam seeds = the sum of `spam_count` across
-   recipient providers. `data: []` means no result for that sender, not zero spam.
-   Treat a run that has not finished after 90 minutes as failed and say so in the
-   dashboard.
-5. Results need one call per sender, about 5 per second, so cap a test at
-   `placement_max_senders` (default 200) and rotate through the fleet across runs,
-   flagged and soon-to-be-Ready mailboxes first.
-
-In `dry-run`, no test is started. A scan may read results of an existing test in
-the workspace from the last 7 days, labelled as not started by `ac-swap`.
-
-If the placement allowance is tight, test one mailbox per domain, poll every 5
-minutes, and stop waiting after 90 minutes.
-
-## Limits
-
-PlusVibe allows about 5 requests per second, with heavier endpoints weighted, and
-temporarily blocks clients that exceed it. Prefer the bulk tools, keep pages at
-100, and pause briefly between single-mailbox calls during a swap.
+Keep calls below roughly five per second and use filtered bulk reads. If a tool
+reports a tighter limit, follow it. No provider credentials are retrieved.

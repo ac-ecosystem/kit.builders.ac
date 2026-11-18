@@ -89,7 +89,7 @@ fork a run merely because the session restarted or another skill took over.
 ## Swap state is not part of a run
 
 Mailbox swapping works across campaigns, so `ac-swap` keeps its state in one
-Git-ignored `swap/` workspace (`swap.md`, `proposals.csv`, `actions.csv`), created
-and checked with `node scripts/swap-workspace.mjs init|check`. Never write swap
+Git-ignored `swap/` workspace (`swap.md`, `snapshot.json`, `report.md`, `report.html`, `runs.csv`, `actions.csv`), created
+and checked with `node scripts/swap-workspace.mjs init|report|check`. Never write swap
 state into `runs/`. The same privacy rules apply: public IDs, timestamps and
 idempotency keys only, never secrets or raw tool responses.

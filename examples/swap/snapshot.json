@@ -1,0 +1,379 @@
+{
+  "version": 1,
+  "run_id": "example-20261117-001",
+  "workspace_id": "ws_example_0001",
+  "report_at": "2026-11-17T09:36:00+07:00",
+  "observed_at": "2026-11-17T02:36:00Z",
+  "coverage": {
+    "complete": true,
+    "description": "Synthetic six-domain fleet with two individually observed mailboxes. Domain totals are context; only individual evidence qualifies a swap or standby."
+  },
+  "windows": {
+    "warmup": {
+      "start": "2026-11-10",
+      "end": "2026-11-16"
+    },
+    "sending": {
+      "start": "2026-11-14",
+      "end": "2026-11-16"
+    }
+  },
+  "campaigns": [
+    {
+      "id": "campaign-example-primary",
+      "name": "Example deliverable campaign",
+      "lane": "primary",
+      "status": "COMPLETED",
+      "assigned_mailboxes": 900
+    },
+    {
+      "id": "campaign-example-catchall",
+      "name": "Example catch-all campaign",
+      "lane": "catchall",
+      "status": "COMPLETED",
+      "assigned_mailboxes": 150
+    },
+    {
+      "id": "campaign-example-next",
+      "name": "Example next primary campaign",
+      "lane": "primary",
+      "status": "DRAFT",
+      "assigned_mailboxes": 800
+    }
+  ],
+  "limitations": "Synthetic evidence supports offline testing only; no external operation was performed.",
+  "domains": [
+    {
+      "esp": "microsoft",
+      "mailboxes": 50,
+      "memberships": [
+        "campaign-example-primary",
+        "campaign-example-catchall",
+        "campaign-example-next"
+      ],
+      "membership_complete": true,
+      "sent": 138,
+      "sender_bounces": 0,
+      "recipient_bounces": 0,
+      "capacity_today": 100,
+      "warmup_age_days": null,
+      "warmup": {
+        "inbox": 2690,
+        "spam": 810,
+        "promotion": 0,
+        "sent": 3500
+      },
+      "dns": {
+        "spf": true,
+        "dkim": true,
+        "dmarc": true,
+        "mx": true,
+        "checked_at": "2026-11-17T02:36:00Z",
+        "source": "synthetic fixture"
+      },
+      "domain": "example-decline.com"
+    },
+    {
+      "esp": "microsoft",
+      "mailboxes": 50,
+      "memberships": [
+        "campaign-example-primary",
+        "campaign-example-catchall"
+      ],
+      "membership_complete": true,
+      "sent": 100,
+      "sender_bounces": 0,
+      "recipient_bounces": 0,
+      "capacity_today": 100,
+      "warmup_age_days": 20,
+      "warmup": {
+        "inbox": 3465,
+        "spam": 35,
+        "promotion": 0,
+        "sent": 3500
+      },
+      "dns": {
+        "spf": true,
+        "dkim": true,
+        "dmarc": false,
+        "mx": true,
+        "checked_at": "2026-11-17T02:36:00Z",
+        "source": "synthetic fixture"
+      },
+      "domain": "example-config.com",
+      "notes": "Synthetic configuration failure; investigate before reuse."
+    },
+    {
+      "esp": "microsoft",
+      "mailboxes": 800,
+      "memberships": [
+        "campaign-example-primary",
+        "campaign-example-next"
+      ],
+      "membership_complete": true,
+      "sent": 100,
+      "sender_bounces": 0,
+      "recipient_bounces": 0,
+      "capacity_today": 1600,
+      "warmup_age_days": 20,
+      "warmup": {
+        "inbox": 3150,
+        "spam": 350,
+        "promotion": 0,
+        "sent": 3500
+      },
+      "dns": {
+        "spf": true,
+        "dkim": true,
+        "dmarc": true,
+        "mx": true,
+        "checked_at": "2026-11-17T02:36:00Z",
+        "source": "synthetic fixture"
+      },
+      "domain": "example-primary.com"
+    },
+    {
+      "esp": "microsoft",
+      "mailboxes": 50,
+      "memberships": [
+        "campaign-example-catchall"
+      ],
+      "membership_complete": true,
+      "sent": 100,
+      "sender_bounces": 0,
+      "recipient_bounces": 0,
+      "capacity_today": 100,
+      "warmup_age_days": 20,
+      "warmup": {
+        "inbox": 3465,
+        "spam": 35,
+        "promotion": 0,
+        "sent": 3500
+      },
+      "dns": {
+        "spf": true,
+        "dkim": true,
+        "dmarc": true,
+        "mx": true,
+        "checked_at": "2026-11-17T02:36:00Z",
+        "source": "synthetic fixture"
+      },
+      "domain": "example-catchall.com"
+    },
+    {
+      "esp": "microsoft",
+      "mailboxes": 50,
+      "memberships": [],
+      "membership_complete": true,
+      "sent": 100,
+      "sender_bounces": 0,
+      "recipient_bounces": 0,
+      "capacity_today": 100,
+      "warmup_age_days": 20,
+      "warmup": {
+        "inbox": 3465,
+        "spam": 35,
+        "promotion": 0,
+        "sent": 3500
+      },
+      "dns": {
+        "spf": true,
+        "dkim": true,
+        "dmarc": true,
+        "mx": true,
+        "checked_at": "2026-11-17T02:36:00Z",
+        "source": "synthetic fixture"
+      },
+      "domain": "example-standby.net"
+    },
+    {
+      "esp": "microsoft",
+      "mailboxes": 50,
+      "memberships": [],
+      "membership_complete": true,
+      "sent": null,
+      "sender_bounces": null,
+      "recipient_bounces": null,
+      "capacity_today": null,
+      "warmup_age_days": null,
+      "warmup": null,
+      "dns": {
+        "spf": null,
+        "dkim": null,
+        "dmarc": null,
+        "mx": null,
+        "checked_at": null,
+        "source": "unavailable"
+      },
+      "domain": "example-unknown.com"
+    }
+  ],
+  "daily_warmup": [
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-04",
+      "inbox": 500,
+      "spam": 0,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-05",
+      "inbox": 495,
+      "spam": 5,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-06",
+      "inbox": 500,
+      "spam": 0,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-07",
+      "inbox": 490,
+      "spam": 10,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-08",
+      "inbox": 495,
+      "spam": 5,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-09",
+      "inbox": 495,
+      "spam": 5,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-10",
+      "inbox": 400,
+      "spam": 100,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-11",
+      "inbox": 390,
+      "spam": 110,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-12",
+      "inbox": 365,
+      "spam": 135,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-13",
+      "inbox": 385,
+      "spam": 115,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-14",
+      "inbox": 380,
+      "spam": 120,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-15",
+      "inbox": 390,
+      "spam": 110,
+      "promotion": 0,
+      "sent": 500
+    },
+    {
+      "domain": "example-decline.com",
+      "date": "2026-11-16",
+      "inbox": 380,
+      "spam": 120,
+      "promotion": 0,
+      "sent": 500
+    }
+  ],
+  "evidence_kind": "synthetic",
+  "mailboxes": [
+    {
+      "memberships": [
+        "campaign-example-primary",
+        "campaign-example-next"
+      ],
+      "membership_complete": true,
+      "sent": 100,
+      "sender_bounces": 0,
+      "recipient_bounces": 0,
+      "capacity_today": 20,
+      "warmup_age_days": 20,
+      "warmup": {
+        "inbox": 200,
+        "spam": 60,
+        "promotion": 0,
+        "sent": 260
+      },
+      "dns": {
+        "spf": true,
+        "dkim": true,
+        "dmarc": true,
+        "mx": true,
+        "checked_at": "2026-11-17T02:36:00Z",
+        "source": "synthetic fixture"
+      },
+      "domain": "example-primary.com",
+      "id": "mailbox-example-source",
+      "email": "sender@example-primary.com",
+      "ever_catchall": false,
+      "standby_for": "unknown"
+    },
+    {
+      "memberships": [],
+      "membership_complete": true,
+      "sent": 100,
+      "sender_bounces": 0,
+      "recipient_bounces": 0,
+      "capacity_today": 20,
+      "warmup_age_days": 20,
+      "warmup": {
+        "inbox": 245,
+        "spam": 5,
+        "promotion": 0,
+        "sent": 250
+      },
+      "dns": {
+        "spf": true,
+        "dkim": true,
+        "dmarc": true,
+        "mx": true,
+        "checked_at": "2026-11-17T02:36:00Z",
+        "source": "synthetic fixture"
+      },
+      "domain": "example-standby.net",
+      "id": "mailbox-example-standby",
+      "email": "spare@example-standby.net",
+      "ever_catchall": false,
+      "standby_for": "primary"
+    }
+  ]
+}

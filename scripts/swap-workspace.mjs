@@ -1,212 +1,120 @@
 import { lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { defaults, generateReport, readConfig, validateSnapshot } from './swap-review.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-export const allowedFiles = ['swap.md', 'proposals.csv', 'actions.csv'];
-export const proposalHeader = 'proposal_id,created_at,mode,esp_counts,flagged_count,campaign_count,slack_thread,status,decision,decided_by,decided_at,excluded,reason,expires_at,executed_at';
-export const actionHeader = 'action_key,proposal_id,at,mode,step,mailbox,esp,campaign,standby,result,detail';
-const proposalStatuses = ['pending', 'needs_decision', 'approved', 'rejected', 'expired', 'executed', 'failed'];
-const actionSteps = ['flag', 'set_ramp', 'attach', 'verify', 'detach', 'untag_campaign', 'untag_standby', 'tag_swapped_out', 'intake_tag', 'intake_warmup', 'refill', 'placement_start', 'placement_result'];
-const actionResults = ['done', 'skipped', 'failed', 'dry_run'];
-const numericConfig = ['ready_days', 'bounce_window_days', 'bounce_rate_threshold', 'bounce_min_sends', 'domain_bounce_rate_threshold', 'domain_bounce_min_sends', 'campaign_list_recipient_share', 'domain_flagged_mailboxes', 'list_suspected_share', 'placement_min_seeds', 'placement_max_senders', 'pool_floor_share', 'proposal_expiry_hours'];
-const requiredConfig = ['mode', 'sequencer', 'sequencer_workspace_id', 'approval_channel', 'approvers', 'standby_mode', 'standby_tag', 'swapped_out_tag', 'ready_days', 'bounce_window_days', 'bounce_rate_threshold', 'bounce_min_sends', 'pool_floor_share', 'proposal_expiry_hours', 'timezone', 'updated_at'];
+export const allowedFiles = ['swap.md', 'snapshot.json', 'runs.csv', 'actions.csv', 'report.md', 'report.html', 'dashboard.html'];
+export const runHeader = 'run_id,observed_at,mode,mailboxes,attention_domains,mixed_domains,verified_standby_mailboxes';
+export const actionHeader = 'action_key,run_id,at,mode,step,mailbox,esp,campaign,standby,result,detail';
+const steps = ['flag', 'set_ramp', 'attach', 'verify', 'detach', 'verify_detach', 'untag_campaign', 'untag_standby', 'tag_swapped_out', 'refill'];
+const results = ['planned', 'done', 'skipped', 'failed', 'dry_run'];
 
-function fail(message) {
-  console.error(message);
-  process.exitCode = 1;
-}
-
-function template() {
-  const now = new Date().toISOString();
-  return {
-    'swap.md': `---
-mode: dry-run
-demo: false
-sequencer: null
-sequencer_workspace_id: null
-builders_account: null
-approval_channel: null
-approvers: []
-standby_mode: tag
-standby_tag: standby
-swapped_out_tag: swapped-out
-standby_exclusions: []
-campaign_exclusions: []
-campaign_include: []
-intake_domains: []
-ready_days: 15
-bounce_window_days: 3
-bounce_rate_threshold: 0.045
-bounce_min_sends: 50
-domain_bounce_rate_threshold: 0.05
-domain_bounce_min_sends: 200
-campaign_list_recipient_share: 0.7
-domain_flagged_mailboxes: 2
-list_suspected_share: 0.5
-placement_min_seeds: 1
-placement_max_senders: 200
-placement_content: neutral
-pool_floor_share: 0.10
-ramp_target: inherit
-ramp: { daily_limit: 30, rampup_daily_limit: 10, rampup_daily_inc: 2, interval_limit_in_min: 15 }
-proposal_expiry_hours: 24
-schedule: { scan: "07:00 daily", placement: "06:00 Mon,Thu", decide: "every 2h 08:00-20:00" }
-timezone: null
-demo_force_flag: []
-updated_at: ${now}
----
-
-# Swap dashboard
-
-Status: not set up. Run the ac-swap setup.
-
-## Last runs
-
-| Mode | Finished | Result |
-| --- | --- | --- |
-
-## Open proposals
-
-None.
-
-## Pool
-
-| ESP | Ready | Warming | Floor | Daily burn (30 d) | Runway | Refill recommendation |
-| --- | --- | --- | --- | --- | --- | --- |
-
-## Placement
-
-No test in progress.
-
-## Swapped-out mailboxes awaiting a retirement decision
-
-None.
-
-## Blocker
-
-None.
-
-## Next action
-
-Run ac-swap setup.
-`,
-    'proposals.csv': `${proposalHeader}\n`,
-    'actions.csv': `${actionHeader}\n`,
-  };
-}
-
-function parseCsvLine(line) {
-  const cells = [];
-  let cell = '';
-  let quoted = false;
-  for (let i = 0; i < line.length; i += 1) {
-    const char = line[i];
-    if (quoted) {
-      if (char === '"' && line[i + 1] === '"') { cell += '"'; i += 1; }
-      else if (char === '"') quoted = false;
-      else cell += char;
-    } else if (char === '"') quoted = true;
-    else if (char === ',') { cells.push(cell); cell = ''; }
-    else cell += char;
+export function parseCsv(text) {
+  const rows = [], cells = [];
+  let value = '', quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') {
+      if (quoted && text[i + 1] === '"') { value += '"'; i++; }
+      else quoted = !quoted;
+    } else if (!quoted && (ch === ',' || ch === '\n')) {
+      cells.push(value.replace(/\r$/, '')); value = '';
+      if (ch === '\n') { if (cells.some((cell) => cell.length)) rows.push(cells.splice(0)); else cells.length = 0; }
+    } else value += ch;
   }
-  cells.push(cell);
-  return cells;
+  if (quoted) throw new Error('Unterminated CSV quote');
+  if (value.length || cells.length) { cells.push(value); rows.push(cells); }
+  return rows;
 }
 
-function rows(text, header) {
-  const lines = text.split(/\r?\n/).filter((line) => line.length);
-  const columns = header.split(',');
-  return lines.slice(1).map((line, index) => {
-    const cells = parseCsvLine(line);
-    if (cells.length !== columns.length) fail(`row ${index + 2} has ${cells.length} cells, expected ${columns.length}`);
-    return Object.fromEntries(columns.map((name, i) => [name, cells[i] ?? '']));
-  });
-}
+function assert(ok, message) { if (!ok) throw new Error(message); }
 
 export async function check(directory) {
-  const label = relative(root, directory) || '.';
-  const entries = (await readdir(directory)).filter((entry) => entry !== '.DS_Store');
-  const unexpected = entries.filter((entry) => !allowedFiles.includes(entry));
-  const missing = allowedFiles.filter((entry) => !entries.includes(entry));
-  if (unexpected.length) fail(`${label}: unexpected swap artifacts: ${unexpected.join(', ')}`);
-  if (missing.length) fail(`${label}: missing swap artifacts: ${missing.join(', ')}`);
-  if (missing.length) return;
-
-  for (const entry of allowedFiles) {
-    if (!(await lstat(resolve(directory, entry))).isFile()) fail(`${label}/${entry} must be a regular file`);
+  const label = relative(root, directory);
+  const entries = (await readdir(directory)).filter((name) => name !== '.DS_Store');
+  if (entries.includes('proposals.csv')) throw new Error(label + ': legacy workspace; preserve it in .kit/ before migration, never overwrite its journal');
+  assert(entries.every((entry) => allowedFiles.includes(entry)), label + ': unexpected swap artifact');
+  for (const file of allowedFiles.filter((file) => !['report.md', 'dashboard.html'].includes(file))) assert(entries.includes(file) && (await lstat(resolve(directory, file))).isFile(), label + ': missing regular file ' + file);
+  const { config } = readConfig(await readFile(resolve(directory, 'swap.md'), 'utf8'));
+  const snapshot = JSON.parse(await readFile(resolve(directory, 'snapshot.json'), 'utf8'));
+  if (snapshot !== null) {
+    validateSnapshot(snapshot);
+    assert(snapshot.workspace_id === config.sequencer_workspace_id, 'snapshot workspace mismatch');
   }
-
-  const dashboard = await readFile(resolve(directory, 'swap.md'), 'utf8');
-  const frontmatter = dashboard.match(/^---\n([\s\S]+?)\n---\n/);
-  if (!frontmatter) fail(`${label}/swap.md needs YAML frontmatter`);
-  const keys = new Map((frontmatter?.[1] ?? '').split('\n')
-    .map((line) => line.match(/^([a-z_]+):\s*(.*)$/))
-    .filter(Boolean)
-    .map((match) => [match[1], match[2].trim()]));
-  for (const key of requiredConfig) {
-    if (!keys.has(key)) fail(`${label}/swap.md is missing ${key}`);
+  const runIds = new Set();
+  const runs = parseCsv(await readFile(resolve(directory, 'runs.csv'), 'utf8'));
+  assert(runs[0]?.join(',') === runHeader, 'runs.csv header mismatch');
+  for (const row of runs.slice(1)) {
+    assert(row.length === runHeader.split(',').length, 'runs.csv column mismatch');
+    assert(row[0] && !runIds.has(row[0]), 'duplicate or missing run ID');
+    assert(Number.isFinite(Date.parse(row[1])) && ['dry-run', 'live'].includes(row[2]), 'invalid run timestamp or mode');
+    assert(row.slice(3).every((cell) => /^\d+$/.test(cell)), 'invalid run counts');
+    runIds.add(row[0]);
   }
-  if (keys.has('mode') && !['dry-run', 'live'].includes(keys.get('mode'))) fail(`${label}/swap.md mode must be dry-run or live`);
-  if (keys.has('standby_mode') && !['tag', 'implicit'].includes(keys.get('standby_mode'))) fail(`${label}/swap.md standby_mode must be tag or implicit`);
-  if (keys.has('ramp_target') && !['inherit', 'fixed'].includes(keys.get('ramp_target'))) fail(`${label}/swap.md ramp_target must be inherit or fixed`);
-  for (const key of numericConfig) {
-    if (keys.has(key) && !/^\d+(?:\.\d+)?$/.test(keys.get(key))) fail(`${label}/swap.md ${key} must be a number`);
+  const actionKeys = new Set();
+  const actions = parseCsv(await readFile(resolve(directory, 'actions.csv'), 'utf8'));
+  assert(actions[0]?.join(',') === actionHeader, 'actions.csv header mismatch');
+  for (const row of actions.slice(1)) {
+    assert(row.length === actionHeader.split(',').length, 'actions.csv column mismatch');
+    const [key, run, at, mode, step, , , , , result] = row;
+    assert(key && !actionKeys.has(key), 'duplicate or missing action key');
+    assert(runIds.has(run), 'action refers to unknown run');
+    assert(Number.isFinite(Date.parse(at)), 'action timestamp invalid');
+    assert(['dry-run', 'live'].includes(mode) && steps.includes(step) && results.includes(result), 'invalid action mode, step or result');
+    assert(!(mode === 'dry-run' && result === 'done' && step !== 'flag'), 'dry-run must not claim an executed action');
+    actionKeys.add(key);
   }
-  const approvers = keys.get('approvers') ?? '';
-  const noApprovers = /^\[\s*\]$/.test(approvers) || /pending|todo|tbd/i.test(approvers);
-  if (keys.get('mode') === 'live' && noApprovers) fail(`${label}/swap.md: live mode needs at least one real Approver`);
-  else if (noApprovers) console.warn(`${label}/swap.md: no Approvers named yet; setup is not finished`);
-
-  const proposals = await readFile(resolve(directory, 'proposals.csv'), 'utf8');
-  if (proposals.split(/\r?\n/, 1)[0] !== proposalHeader) fail(`${label}/proposals.csv header does not match the swap contract`);
-  for (const row of rows(proposals, proposalHeader)) {
-    if (!proposalStatuses.includes(row.status)) fail(`${label}/proposals.csv ${row.proposal_id}: unknown status ${row.status}`);
-  }
-
-  const actions = await readFile(resolve(directory, 'actions.csv'), 'utf8');
-  if (actions.split(/\r?\n/, 1)[0] !== actionHeader) fail(`${label}/actions.csv header does not match the swap contract`);
-  const seen = new Set();
-  for (const row of rows(actions, actionHeader)) {
-    if (!actionSteps.includes(row.step)) fail(`${label}/actions.csv ${row.action_key}: unknown step ${row.step}`);
-    if (!actionResults.includes(row.result)) fail(`${label}/actions.csv ${row.action_key}: unknown result ${row.result}`);
-    if (seen.has(row.action_key)) fail(`${label}/actions.csv: duplicate action_key ${row.action_key}`);
-    seen.add(row.action_key);
-  }
-
-  if (process.exitCode !== 1) console.log(`swap workspace is valid: ${label}`);
+  assert((await readFile(resolve(directory, 'report.html'), 'utf8')).includes('<!doctype html>'), 'report.html must be standalone HTML');
+  console.log('swap workspace is valid: ' + label);
 }
 
-async function init(directory) {
-  try {
-    await mkdir(directory);
-  } catch (error) {
-    if (error?.code !== 'EEXIST') throw error;
-    console.log(`swap workspace already exists; validating without overwriting: ${relative(root, directory)}`);
+export async function init(directory) {
+  try { await mkdir(directory); }
+  catch (error) {
+    if (error.code !== 'EEXIST') throw error;
     await check(directory);
     return;
   }
-  for (const [name, contents] of Object.entries(template())) {
-    await writeFile(resolve(directory, name), contents, { flag: 'wx' });
-  }
-  console.log(`created swap workspace: ${relative(root, directory)}`);
+  const config = {
+    mode: defaults.mode, sequencer: 'plusvibe', sequencer_workspace_id: null,
+    schedule: defaults.schedule, timezone: 'UTC', live_campaign_include: [],
+    primary_domains: [], catchall_domains: [], standby_domains: [], catchall_history_domains: [],
+    ready_days: defaults.ready_days, warmup_threshold: defaults.warmup_threshold,
+    warmup_min_results: defaults.warmup_min_results, bounce_window_days: defaults.bounce_window_days,
+    bounce_threshold: defaults.bounce_threshold, bounce_min_events: defaults.bounce_min_events,
+  };
+  const files = {
+    'swap.md': '---\n' + Object.entries(config).map(([k, v]) => k + ': ' + JSON.stringify(v)).join('\n') + '\n---\n\n# Fleet review\n\nNot run yet. Collect a snapshot using ac-swap, then run the report command.\n',
+    'dashboard.html': '<!doctype html><html lang="en"><title>Fleet Observatory</title><h1>Not synced yet</h1></html>\n',
+    'report.md': '# Swap simulation\n\nNot run yet.\n',
+    'snapshot.json': 'null\n', 'runs.csv': runHeader + '\n', 'actions.csv': actionHeader + '\n',
+    'report.html': '<!doctype html><html lang="en"><meta charset="utf-8"><title>Fleet review</title><h1>Not run yet</h1><p>Collect evidence using ac-swap, then generate the report.</p></html>\n',
+  };
+  for (const [name, content] of Object.entries(files)) await writeFile(resolve(directory, name), content, { flag: 'wx' });
   await check(directory);
 }
 
-const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isMain) {
-  const [command, ...rest] = process.argv.slice(2);
-  const dirFlag = rest.indexOf('--dir');
-  const directory = resolve(root, dirFlag >= 0 ? rest[dirFlag + 1] ?? '' : 'swap');
-  if (!['init', 'check'].includes(command) || (dirFlag >= 0 && !rest[dirFlag + 1])) {
-    console.error('usage: node scripts/swap-workspace.mjs <init|check> [--dir <path>]');
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const [command, ...args] = process.argv.slice(2);
+  if (!['init', 'check', 'report'].includes(command) || (args.length && (args.length !== 2 || args[0] !== '--dir'))) {
+    console.error('usage: node scripts/swap-workspace.mjs <init|check|report> [--dir <path>]');
     process.exit(2);
   }
+  const directory = resolve(root, args[1] ?? 'swap');
   try {
     if (command === 'init') await init(directory);
-    else await check(directory);
+    else if (command === 'check') await check(directory);
+    else {
+      await check(directory);
+      const r = await generateReport(directory);
+      await check(directory);
+      console.log('Dashboard: ' + resolve(directory, 'dashboard.html'));
+      console.log('Report: ' + resolve(directory, 'report.md'));
+      console.log(r.totals.attention + ' domains need attention; no external changes performed');
+    }
   } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exit(1);
+    console.error(error.message);
+    process.exitCode = 1;
   }
 }
