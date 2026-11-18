@@ -69,9 +69,10 @@ matching MCP, it reports that the remote campaign cannot be created.
 
 Invoke `ac-swap` for a manual-first fleet review. It combines DNS, warmup and
 bounce evidence, explains primary/catch-all/standby pools, and forecasts how a
-replacement and refill would work. Each run produces local Markdown and HTML
-reports with a system overview, scenario walkthrough, timeline and evidence.
-No Slack connection or database is required. Dry-run makes no external changes;
+replacement and refill would work. Each run refreshes a fleet dashboard with pool filters, campaign status,
+health charts and a swap simulation, plus portable Markdown evidence. The agent
+republishes the same public Claude Artifact or Codex Site when supported.
+No Slack connection or database is required. Dry-run makes no sequencer changes;
 proposed pool assignments are never execution authorization. Scheduling is
 optional and created only on request. Read the [ac-swap guide](docs/ac-swap.md)
 and the [synthetic simulation](examples/swap/report.md).

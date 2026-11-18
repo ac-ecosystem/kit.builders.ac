@@ -189,3 +189,58 @@ test('a report with no qualifying incident does not invent a replacement', () =>
   assert.equal(simulate(r), null);
   assert.match(simulationMarkdown(r), /No qualifying warmup incident/);
 });
+
+test('dashboard exports observed pools without private fields or hypothetical stock', async () => {
+  const { dashboardData, dashboardHtml } = await import('./swap-dashboard.mjs');
+  const s = clone();
+  s.domains[0].notes = 'PRIVATE-NOTE password=secret';
+  s.domains[0].mailbox_addresses = ['private@example.com'];
+  s.campaigns[0].name = 'Example $& </script> contact private@example.com';
+  s.campaigns[0].sent_count = 123;
+  const r = review(s, config({ standby_domains: [] }));
+  const d = dashboardData(r);
+  assert.equal(d.pools.primary.mailboxes, 900);
+  assert.equal(d.pools.catchall.mailboxes, 150);
+  assert.equal(d.totals.overlap, 100);
+  assert.equal(d.pools.standby.mailboxes, 0);
+  assert.equal(d.campaigns[0].sent, 123);
+  assert.equal(d.campaigns[1].sent, null);
+  assert.equal(d.domains.find((x) => x.name === 'example-unknown.com').sent, null);
+  const html = await dashboardHtml(r);
+  for (const secret of [s.workspace_id, s.campaigns[0].id, 'PRIVATE-NOTE', 'private@example.com', 'password=secret']) assert.ok(!html.includes(secret));
+  const json = html.match(/window.FLEET_DATA=(.*?);<\/script>/s)[1];
+  assert.equal(json.includes('</script>'), false);
+  assert.match(JSON.parse(json).campaigns[0].name, /\$&/);
+  assert.deepEqual(dashboardData(r), JSON.parse(json));
+});
+
+test('each report refreshes dashboard and configured Site while retaining run idempotency', async () => {
+  const temp = await mkdtemp(join(tmpdir(), 'fleet-dashboard-'));
+  const dir = join(temp, 'workspace');
+  try {
+    await init(dir);
+    const { mkdir } = await import('node:fs/promises');
+    const site = join(dir, 'site');
+    await mkdir(join(site, '.openai'), { recursive: true });
+    await writeFile(join(site, '.openai/hosting.json'), JSON.stringify({ project_id: 'site-example', static: { directory: 'dist' } }));
+    await writeFile(join(dir, 'snapshot.json'), JSON.stringify(clone()));
+    let md = await readFile(join(dir, 'swap.md'), 'utf8');
+    md = md.replace('---\n', '---\ndashboard_project_id: "site-example"\ndashboard_site_directory: '+JSON.stringify(site)+'\n');
+    md = md.replace(/sequencer_workspace_id:.*\n/, 'sequencer_workspace_id: '+JSON.stringify(fixture.workspace_id)+'\n');
+    await writeFile(join(dir, 'swap.md'), md);
+    await generateReport(dir);
+    const before = await readFile(join(dir, 'dashboard.html'), 'utf8');
+    assert.equal(before, await readFile(join(site, 'dist/index.html'), 'utf8'));
+    const changed = clone(); changed.campaigns[0].sent_count = 9876;
+    await writeFile(join(dir, 'snapshot.json'), JSON.stringify(changed));
+    await generateReport(dir);
+    const after = await readFile(join(dir, 'dashboard.html'), 'utf8');
+    assert.notEqual(after, before);
+    assert.equal(after, await readFile(join(site, 'dist/index.html'), 'utf8'));
+    assert.equal((await readFile(join(dir, 'runs.csv'), 'utf8')).trim().split('\n').length, 2);
+    assert.deepEqual(JSON.parse(await readFile(join(dir, 'snapshot.json'), 'utf8')), changed);
+    await writeFile(join(site, '.openai/hosting.json'), JSON.stringify({ project_id: 'other-site', static: { directory: 'dist' } }));
+    await assert.rejects(generateReport(dir), /identity/);
+    assert.equal(await readFile(join(site, 'dist/index.html'), 'utf8'), after);
+  } finally { await rm(temp, { recursive: true, force: true }); }
+});

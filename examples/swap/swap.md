@@ -20,4 +20,4 @@ catchall_share: 0.2
 
 # Fleet review
 
-Run example-20261117-001. Read [the simulation walkthrough](report.md).
+Run example-20261117-001. Open [the fleet dashboard](dashboard.html). Read [the simulation walkthrough](report.md).

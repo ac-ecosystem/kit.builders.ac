@@ -1,12 +1,12 @@
 ---
 name: ac-swap
-description: Review fleet health and propose pool assignments and mailbox replacements from sequencer evidence. Run manually or on an explicitly requested schedule, report locally, and execute configured swaps only in explicit live mode. Use for DNS, warmup, bounce, standby and refill reviews.
+description: Review fleet health and propose pool assignments and mailbox replacements from sequencer evidence. Run manually or on an explicitly requested schedule, refresh a public fleet dashboard, and execute configured swaps only in explicit live mode. Use for DNS, warmup, bounce, standby and refill reviews.
 ---
 
 # Review the fleet, then swap within the configured scope
 
 One run collects evidence, classifies health, selects replacements and saves a
-local report. There is no Slack connection, proposal queue or per-swap approval.
+fleet dashboard and evidence report. There is no Slack connection, proposal queue or per-swap approval.
 Start in dry-run; changing the skill does not authorize changes to a live account.
 
 Read [the contract](references/swap-contract.md) for pool rules, snapshot fields,
@@ -19,13 +19,16 @@ Use [builders.ac signals](references/deliverability.md) when its MCP is availabl
   extract credentials or call vendor APIs directly.
 - Never create, launch, pause, resume or delete a campaign, send email or start
   placement tests, purchase infrastructure, or deprovision a mailbox/domain.
-- Dry-run is read-only externally: no tag, warmup, ramp or membership writes.
+- Dry-run forbids sequencer writes: no tag, warmup, ramp or membership changes.
+  Publishing an authorized dashboard is separate from campaign execution.
 - Live execution needs the user's explicit live authorization, a saved campaign
   include list and designated standby inventory. Keep configured client tool
   permissions intact. No additional approval loop is needed within that scope.
 - An inferred pool assignment is a recommendation, never execution authorization.
 - Public examples stay synthetic. Customer evidence stays in Git-ignored swap/.
   Save normalized observations and public IDs, never raw responses or secrets.
+  Publish only the dashboard allowlist to the user-authorized audience; never
+  publish the snapshot, mailbox addresses, credentials or private report HTML.
 
 ## Setup
 
@@ -63,19 +66,23 @@ Use [builders.ac signals](references/deliverability.md) when its MCP is availabl
 4. Build the minimal snapshot.json specified in the contract. Include a daily
    warmup timeline when available. Resolve lane labels from explicit config
    first; campaign-name inference must be labeled. Missing lane = unknown.
-5. Run node scripts/swap-workspace.mjs report. It derives domain health and a
-   provisional domain-level mapping, writes report.md (the primary Mermaid walkthrough), report.html, and a swap.md link,
+5. Run node scripts/swap-workspace.mjs report. It refreshes dashboard.html
+   (the primary view), report.md (Mermaid walkthrough), report.html and swap.md,
    and records one run summary in runs.csv. Re-rendering the same run must not
    duplicate history. The helper has no network calls or mutation capability.
-6. In dry-run, stop here. Show the report link and key findings. Identify actual
-   qualified standbys separately from hypothetical capacity. If none can be
+6. Refresh the published dashboard on every run, including dry-run, following
+   [dashboard publishing](references/dashboard.md). In Claude use a public Claude
+   Artifact when supported; in Codex use a public Site. Reuse its saved identity
+   and URL. Never claim a local file or private preview is public.
+7. In dry-run, skip live execution. Show the dashboard link and key findings.
+   Identify actual    qualified standbys separately from hypothetical capacity. If none can be
    proven, show a replacement requirement and a clearly labeled rehearsal; do
    not claim a completed swap or restored delivery.
-7. In authorized live mode, use the execution procedure in the contract. Recheck
+8. In authorized live mode, use the execution procedure in the contract. Recheck
    each mailbox, replacement, health and membership immediately before changes.
    Skip ambiguous or changed pairs; record failures rather than asking for a
    Slack decision. Resume unfinished actions before creating new ones.
-8. Validate with node scripts/swap-workspace.mjs check. Finish with counts,
+9. Validate with node scripts/swap-workspace.mjs check. Finish with counts,
    evidence, proposed/completed actions, shortages and the report link. Update
    the run summary with actual outcomes; the report helper itself never executes.
 
@@ -85,7 +92,9 @@ side. Rehearsed replacements and hypothetical capacity are labeled throughout.
 
 ## Presentation
 
-Lead with one executed local simulation: observed incident → model assumptions →
-pool movements → step-by-step membership counts → failure branch → refill math.
-Use Mermaid and compact tables in report.md. Keep unrelated fleet diagnostics in
-the secondary HTML report. Never present the local model as provider execution.
+Use the dashboard first: Primary / Catch-all / Standby counts, campaign status,
+one health chart and a step-through swap simulation. Use warm off-white, charcoal,
+thin rules and a restrained accent; selected serif headings, readable controls,
+flat sections. Put evidence and assumptions behind expandable details. Keep
+observed inventory separate from assumed standby capacity. report.md remains a
+portable Mermaid walkthrough; report.html is secondary diagnostic evidence.

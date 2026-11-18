@@ -4,7 +4,8 @@
 
 One Git-ignored swap/ directory contains exactly:
 - swap.md: JSON-compatible YAML settings and a link to the walkthrough.
-- report.md: primary simulation walkthrough with Mermaid diagrams and state tables.
+- dashboard.html: primary interactive public-export view (generated on each report).
+- report.md: portable simulation walkthrough with Mermaid diagrams and state tables.
 - snapshot.json: normalized latest observations, never raw provider responses.
 - report.html: standalone report; open locally or print to PDF. No external assets.
 - runs.csv: one summary per run ID. Rendering the same run updates its row.

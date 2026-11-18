@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="A clear view of sending pools, campaign assignments and domain health, refreshed by the builders.ac agent.">
+<title>Fleet Observatory — builders.ac</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<style>/*DASHBOARD_CSS*/</style>
+</head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="#overview"><span class="brand-mark">b</span><span>builders.ac<span class="brand-sub">FLEET OBSERVATORY</span></span></a>
+  <div class="workspace">PlusVibe / fleet</div>
+
+  <nav aria-label="Workspace navigation">
+    <button class="nav-item active" data-view="overview"><span class="nav-icon">◫</span>Fleet overview</button>
+    <button class="nav-item" data-view="campaigns"><span class="nav-icon">↗</span>Campaigns<span id="nav-campaign-count" class="nav-count"></span></button>
+    <button class="nav-item" data-view="simulation"><span class="nav-icon">⇄</span>Swap rehearsal<span class="nav-note">MODEL</span></button>
+  </nav>
+  <div class="sidebar-bottom"><div class="sidebar-line"></div><span class="tiny-dot"></span>Agent-refreshed snapshots<span class="sidebar-version">ac-swap / v0</span></div>
+</aside>
+<div class="app-shell">
+  <header class="topbar"><div class="breadcrumb">WORKSPACE <span>/</span> <strong id="breadcrumb-view">OVERVIEW</strong></div><div class="topbar-right"><span class="public-label">↗ Public view</span><span class="avatar">ac</span></div></header>
+  <main>
+    <div class="page-heading"><div><h1 id="page-title">Fleet overview<span class="title-period">.</span></h1><p id="page-description" hidden></p></div><div class="sync-control"><span class="sync-label">SAVED SNAPSHOT</span><strong id="snapshot-time"></strong><button id="reload" class="button button-small">↻ Refresh view</button></div></div>
+    <div class="scope-strip"><span class="scope-icon">◉</span><span id="scope-text"></span><span class="scope-tag">Partial fleet view</span></div>
+    <section id="view-overview">
+      <div class="section-heading"><h2>Operating pools</h2><span><span id="lane-mapping-label">Campaign lanes</span> <span class="help-mark" title="Counts can overlap. No assumed standby capacity is added to the inventory.">?</span></span></div>
+      <div id="pool-cards" class="pool-grid"></div>
+      <button id="overlap-notice" class="overlap-notice"><span class="notice-icon">↔</span><span id="overlap-text"></span><span class="notice-action">Review ↗</span></button>
+      <div class="insight-grid">
+        <section class="surface trend-surface"><div class="section-heading"><div><h2 id="spotlight-name"></h2></div><button class="text-button" id="spotlight-detail">Inspect domain ↗</button></div><div class="trend-head"><div><span class="metric-label">7-day warmup inbox</span><strong id="spotlight-rate" class="spotlight-number"></strong></div><div id="spotlight-status"></div></div><div id="spotlight-chart"></div><div class="chart-foot"><span><i class="legend-line"></i>Daily inbox rate</span><span><i class="legend-line dashed"></i>90% threshold</span></div><div class="spotlight-footer" id="spotlight-footer"></div></section>
+        <section class="surface attention-surface"><div class="section-heading"><div><h2>Needs attention <span id="attention-count" class="inline-count"></span></h2></div></div><div id="attention-list"></div><button id="all-attention" class="attention-footer">View all flagged domains <span>→</span></button></section>
+      </div>
+      <details class="surface campaigns-preview"><summary>Campaigns <span class="muted">status & assignments</span></summary><div class="section-heading"><div><h2>Campaigns <span class="muted" id="campaign-summary"></span></h2></div><button class="text-button" data-go="campaigns">View campaigns ↗</button></div><div id="campaign-preview-table"></div></details>
+      <section class="inventory-section"><div class="section-heading"><div><h2>Domain inventory <span id="inventory-count" class="inline-count"></span></h2></div><label class="search-field"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a domain" aria-label="Find a domain"></label></div><div class="inventory-toolbar"><div id="inventory-filters" class="filter-group" role="group" aria-label="Filter domain inventory"></div><button id="clear-filter" class="text-button" hidden>Clear pool filter ×</button></div><div id="domain-table" class="surface" aria-live="polite"></div></section>
+    </section>
+    <section id="view-campaigns" hidden><div id="campaign-status-cards" class="campaign-status-grid"></div><section class="surface"><div class="section-heading"><h2>Campaign assignments</h2><span class="muted">Status as captured in the saved snapshot</span></div><div id="campaign-full-table"></div></section><details class="evidence"><summary>How to read these numbers</summary><p>Assignments are captured membership. Sends and bounces are lifetime totals; — means unknown.</p></details></section>
+    <section id="view-simulation" hidden>
+      <div class="simulation-intro"><div><span class="badge badge-model">LOCAL SIMULATION</span><h2>Replace a failing domain</h2><p id="simulation-intro"></p></div><div class="simulation-switch" role="group" aria-label="Choose simulation path"><button data-sim-path="success" class="selected">All verified</button><button data-sim-path="failure">Partial failure</button></div></div>
+      <section id="simulator" class="surface simulator"><div class="simulation-step-header"><div><div id="step-counter" class="eyebrow"></div><h3 id="step-title"></h3></div><div class="step-buttons"><button id="sim-reset" class="button button-small">Reset</button><button id="sim-next" class="button button-primary">Next step →</button></div></div><div id="sim-progress" class="sim-progress"></div><div id="sim-pools" class="sim-pools" aria-live="polite"></div><p id="sim-explanation" class="sim-explanation"></p><details class="evidence"><summary>Model assumptions</summary><div id="sim-assumptions" class="simulation-assumptions"></div></details></section>
+      <details class="surface simulation-trace"><summary>Full transition log</summary><div class="section-heading"><h2>State transition log</h2><span class="muted">Calculated locally. No provider calls.</span></div><div id="simulation-table"></div></details>
+    </section>
+    <footer class="page-footer"><span><strong>builders.ac</strong> <span>Fleet Observatory</span></span><span>Observed fleet · simulated swaps</span></footer>
+  </main>
+</div>
+<dialog id="detail-dialog" aria-labelledby="detail-title"><div class="detail-top"><div><div class="eyebrow">DOMAIN INSPECTOR</div><h2 id="detail-title"></h2></div><button id="detail-close" class="close-button" aria-label="Close domain inspector">×</button></div><div id="detail-body"></div></dialog>
+<script>/*FLEET_DATA*/</script>
+<script>/*DASHBOARD_JS*/</script>
+</body>
+</html>

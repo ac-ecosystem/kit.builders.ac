@@ -5,29 +5,31 @@ explains health and pool assignments, and forecasts replacement behavior.
 V0 uses one manual-first workflow with no Slack integration or per-swap decision
 queue. Scheduling is optional and created only when requested.
 
-## The report
+## The dashboard
 
-Open swap/report.md in a Mermaid-capable Markdown viewer. It walks through one
-local simulation using observed health and campaign membership, with explicit
-standby assumptions, model state transitions and a deliberate verification-failure
-branch. swap/report.html remains a secondary fleet diagnostic view.
+Open `swap/dashboard.html`, or the saved public URL. It shows three pools,
+campaign status, a domain health chart, searchable inventory and a step-through
+swap simulation. Click a pool to filter inventory; click a domain for DNS and
+warmup evidence. Supporting detail is expandable.
 
-The report explains:
-1. The system: PlusVibe evidence → health rules → pool assignments → replacement
-   forecast → replenishment requirement.
-2. Pool A (primary), Pool B (catch-all), Pool C (standby), plus recovery and
-   configuration-review states.
-3. One concrete incident using observed metrics and clearly stated assumptions.
-4. A daily warmup timeline, domain evidence table and provisional pool counts.
-5. Expected attach/verify/detach behavior, failure handling, capacity limits and
-   refill demand. No successful execution or deliverability improvement is implied.
+Each agent run reads MCP evidence, regenerates the dashboard and republishes the
+same public URL: Claude Artifact in supported Claude clients, Site in Codex.
+The browser reload button only reloads the published snapshot. See
+[dashboard publishing](../.agents/skills/ac-swap/references/dashboard.md) for
+identity, public data boundaries and clients without publishing tools.
 
-Real observations, inferred lanes, proposed mappings and hypothetical inventory
-are labeled separately. A run can be useful without known standbys or permission
-to mutate anything. The report is designed for a joint engineering discussion.
+The dashboard counts observed assignments. Shared senders remain visible in both
+lanes, with an overlap warning. No provisional percentage allocation or assumed
+standby capacity is added to observed inventory. A partial snapshot cannot prove
+standby absence elsewhere. Campaign send/bounce totals are lifetime where captured;
+domain counts use the displayed evidence windows.
 
-A synthetic version is in [examples/swap](../examples/swap/swap.md). Generate or
-refresh it with:
+`swap/report.md` remains the portable Mermaid simulation walkthrough.
+`swap/report.html` is secondary diagnostic evidence and is not a public export.
+Customer snapshots, private notes and mailbox addresses stay local.
+
+A synthetic dashboard is in [examples/swap/dashboard.html](../examples/swap/dashboard.html).
+Refresh it with:
 
 ~~~sh
 node scripts/swap-workspace.mjs report --dir examples/swap
@@ -49,7 +51,7 @@ node scripts/swap-workspace.mjs check
 ~~~
 
 The helper has no network or execution calls. It validates the saved snapshot,
-calculates health and a deterministic planning split, then writes the report.
+calculates health and a deterministic planning split, then writes the dashboard and reports. Publication is a separate agent step.
 
 ## Pools and policy
 
@@ -88,8 +90,9 @@ orders infrastructure and warms new backups. No order is placed by this kit.
 
 | File | Purpose |
 | --- | --- |
-| swap.md | Settings and a link to the walkthrough |
-| report.md | Primary simulation walkthrough with Mermaid and state tables |
+| swap.md | Settings, hosting identity and dashboard / walkthrough links |
+| dashboard.html | Primary interactive dashboard; public allowlist only |
+| report.md | Portable simulation walkthrough with Mermaid and state tables |
 | snapshot.json | Minimal normalized evidence |
 | report.html | System overview, pool map, scenarios and evidence |
 | runs.csv | Summary history; rendering a run twice updates its row |
@@ -120,5 +123,5 @@ node scripts/validate-kit.mjs
 ~~~
 
 Offline tests cover classification, incomplete/stale data, pool isolation,
-forecast arithmetic, output escaping and repeated report generation. They do
+forecast arithmetic, public export privacy, output escaping, Site identity checks and repeated refreshes. They do
 not certify a production swap or future inbox placement.

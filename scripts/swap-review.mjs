@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { simulationMarkdown } from './swap-simulation.mjs';
 import { reportStamp, systemHtml } from './swap-scenarios.mjs';
 
@@ -217,9 +217,18 @@ export async function generateReport(directory) {
   filtered.push(row);
   // Validate and render before changing any output. Re-rendering a run is idempotent.
   const html = htmlReport(result), body = markdownReport(result);
+  const { dashboardHtml, dashboardDestination } = await import('./swap-dashboard.mjs');
+  const dashboard = await dashboardHtml(result);
+  if (config.dashboard_site_directory && !config.dashboard_project_id) throw new Error('Dashboard Site needs dashboard_project_id');
+  const destination = await dashboardDestination(config.dashboard_site_directory, config.dashboard_project_id);
   await writeFile(path('report.html'), html);
+  await writeFile(path('dashboard.html'), dashboard);
+  if (destination) {
+    await mkdir(config.dashboard_site_directory + '/dist', { recursive: true });
+    await writeFile(destination, dashboard);
+  }
   await writeFile(path('report.md'), body);
-  await writeFile(path('swap.md'), frontmatter + '\n# Fleet review\n\nRun ' + snapshot.run_id + '. Read [the simulation walkthrough](report.md).\n');
+  await writeFile(path('swap.md'), frontmatter + '\n# Fleet review\n\nRun ' + snapshot.run_id + '. Open [the fleet dashboard](dashboard.html). Read [the simulation walkthrough](report.md).\n');
   await writeFile(path('runs.csv'), filtered.join('\n') + '\n');
   return result;
 }
