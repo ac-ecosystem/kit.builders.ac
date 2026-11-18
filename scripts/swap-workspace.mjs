@@ -82,7 +82,7 @@ export async function init(directory) {
     primary_domains: [], catchall_domains: [], standby_domains: [], catchall_history_domains: [],
     ready_days: defaults.ready_days, warmup_threshold: defaults.warmup_threshold,
     warmup_min_results: defaults.warmup_min_results, bounce_window_days: defaults.bounce_window_days,
-    bounce_threshold: defaults.bounce_threshold, bounce_min_sends: defaults.bounce_min_sends,
+    bounce_threshold: defaults.bounce_threshold, bounce_min_events: defaults.bounce_min_events,
   };
   const files = {
     'swap.md': '---\n' + Object.entries(config).map(([k, v]) => k + ': ' + JSON.stringify(v)).join('\n') + '\n---\n\n# Fleet review\n\nNot run yet. Collect a snapshot using ac-swap, then run the report command.\n',

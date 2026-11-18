@@ -75,7 +75,9 @@ republishes the same public Claude Artifact or Codex Site when supported.
 No Slack connection or database is required. Dry-run makes no sequencer changes;
 proposed pool assignments are never execution authorization. Scheduling is
 optional and created only on request. Read the [ac-swap guide](docs/ac-swap.md)
-and the [synthetic simulation](examples/swap/report.md).
+and the [synthetic simulation](examples/swap/report.md). The compact
+[operating rules](.agents/skills/ac-swap/references/rules.md) define mailbox-level
+swaps, permanent Catch-all exclusion from Primary and the 3% / three-event guard.
 
 ## Connection model
 

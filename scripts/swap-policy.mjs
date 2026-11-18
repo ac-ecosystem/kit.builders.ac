@@ -18,13 +18,17 @@ export function assessSignals(record, snapshot, config) {
   }
   const senderRate = record.sent && record.sender_bounces !== null ? record.sender_bounces / record.sent : null;
   const bounceWindowMatches = (Date.parse(snapshot.windows.sending.end) - Date.parse(snapshot.windows.sending.start)) / DAY + 1 === config.bounce_window_days;
-  if (bounceWindowMatches && record.sent >= config.bounce_min_sends && senderRate !== null && senderRate >= config.bounce_threshold) {
+  const bounceEvaluable = sendingFresh && bounceWindowMatches && record.sent > 0 && senderRate !== null;
+  const bounceThresholdReached = senderRate !== null && senderRate >= config.bounce_threshold;
+  const repeatedSenderFailures = record.sender_bounces !== null && record.sender_bounces >= config.bounce_min_events;
+  if (bounceWindowMatches && bounceThresholdReached && repeatedSenderFailures) {
     (sendingFresh ? reasons : historicalFindings).push('Sender-side bounce threshold reached');
   }
-  const bounceEvaluable = sendingFresh && bounceWindowMatches && record.sent >= config.bounce_min_sends && senderRate !== null;
+  const bounceWarning = bounceEvaluable && bounceThresholdReached && !repeatedSenderFailures;
   const missing = !dnsFresh || !warmupFresh || checks.some((key) => record.dns[key] === null) || warmupRate === null || classified < config.warmup_min_results || record.esp === 'unknown';
   const health = dnsFresh && failedChecks.length ? 'configuration review' : reasons.length ? 'recovery' : missing ? 'unverified' : 'healthy';
-  return { classified, warmupRate, dnsFresh, warmupFresh, sendingFresh, senderRate, bounceWindowMatches, bounceEvaluable, health, reasons, historicalFindings };
+  const warnings = bounceWarning ? ['Sender-side bounce rate at or above ' + (config.bounce_threshold * 100) + '%; fewer than ' + config.bounce_min_events + ' sender-side failures — review only'] : [];
+  return { warnings, classified, warmupRate, dnsFresh, warmupFresh, sendingFresh, senderRate, bounceWindowMatches, bounceEvaluable, bounceWarning, health, reasons, historicalFindings };
 }
 
 export function reviewMailboxes(snapshot, config, domains) {

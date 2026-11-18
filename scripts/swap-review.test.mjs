@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { defaults, generateReport, htmlReport, readConfig, review, validateSnapshot } from './swap-review.mjs';
+import { defaults, generateReport, htmlReport, markdownReport, readConfig, review, validateSnapshot } from './swap-review.mjs';
 import { simulate, simulationMarkdown } from './swap-simulation.mjs';
 import { forecast, reportStamp } from './swap-scenarios.mjs';
 import { check, init, parseCsv } from './swap-workspace.mjs';
@@ -295,13 +295,19 @@ test('completed cross-lane assignments cannot qualify a standby', () => {
   assert.equal(find(r, 'example-standby.net').ready, false);
 });
 
-test('3% applies inclusively to sender-side bounces with the sample guard', () => {
-  for (const [sent, bounces, expected] of [[200, 6, true], [200, 5, false], [60, 2, true], [49, 2, false]]) {
+test('bounce candidate requires both 3% and three sender-side failures, without a send floor', () => {
+  for (const [sent, bounces, candidate, warning] of [
+    [10, 1, false, true], [60, 2, false, true], [20, 3, true, false],
+    [100, 3, true, false], [101, 3, false, false], [200, 6, true, false],
+    [1000, 3, false, false], [0, 0, false, false],
+  ]) {
     const s = clone(), m = s.mailboxes[0];
     m.warmup = { inbox: 250, spam: 0, promotion: 0, sent: 250 };
     m.sent = sent; m.sender_bounces = bounces;
     const checked = review(s, config()).mailboxes[0];
-    assert.equal(checked.replaceCandidate, expected);
+    assert.equal(checked.replaceCandidate, candidate, sent+' sends / '+bounces+' bounces');
+    assert.equal(checked.bounceWarning, warning);
+    assert.equal(checked.bounceEvaluable, sent > 0);
   }
 });
 
@@ -347,4 +353,28 @@ test('a Catch-all standby cannot hide a Primary replacement shortage', () => {
 test('using one standby does not disqualify unused same-lane sibling mailboxes', () => {
   const s = clone(); s.domains.find((d) => d.domain === 'example-standby.net').memberships = ['campaign-example-next'];
   assert.equal(review(s, config()).mailboxes[1].ready, true);
+});
+
+test('a legacy send-floor setting cannot suppress the repeated-failure rule', () => {
+  const parsed = readConfig('---\nsequencer_workspace_id: '+JSON.stringify(fixture.workspace_id)+'\nbounce_min_sends: 99999\n---\n').config;
+  const s = clone(), m = s.mailboxes[0];
+  m.warmup = {inbox:250, spam:0, promotion:0, sent:250}; m.sent = 20; m.sender_bounces = 3;
+  assert.equal(review(s, parsed).mailboxes[0].replaceCandidate, true);
+});
+
+test('individual bounce counters cannot exceed sends when the other counter is unknown', () => {
+  const s = clone(); s.mailboxes[0].sent = 2; s.mailboxes[0].sender_bounces = 3; s.mailboxes[0].recipient_bounces = null;
+  assert.throws(() => validateSnapshot(s), /bounce count exceeds sends/);
+});
+
+test('one or two elevated sender failures surface as warnings without inventing a swap', async () => {
+  const s = clone(), m = s.mailboxes[0];
+  m.warmup = {inbox:250, spam:0, promotion:0, sent:250}; m.sent = 60; m.sender_bounces = 2;
+  const r = review(s, config());
+  assert.equal(simulate(r), null);
+  assert.match(markdownReport(r), /Mailbox warnings/);
+  assert.ok(markdownReport(r).includes(m.email));
+  assert.ok(htmlReport(r).includes(m.email));
+  const {dashboardHtml} = await import('./swap-dashboard.mjs');
+  assert.ok(!(await dashboardHtml(r)).includes(m.email));
 });

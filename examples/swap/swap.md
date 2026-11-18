@@ -13,7 +13,7 @@ warmup_threshold: 0.9
 warmup_min_results: 50
 bounce_window_days: 3
 bounce_threshold: 0.03
-bounce_min_sends: 50
+bounce_min_events: 3
 catchall_history_domains: ["example-catchall.com","example-config.com","example-decline.com"]
 ---
 

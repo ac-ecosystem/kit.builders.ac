@@ -92,7 +92,9 @@ sends separately. Require at least warmup_min_results classified results for the
 DNS results must be within 24 hours of observed_at. These are configurable policy
 assumptions, not proof of campaign placement. The sending window must match
 bounce_window_days before applying a bounce threshold; longer retrospective
-windows are context only. The default sender-side bounce cutoff is inclusive at 3%. It does not imply a
+windows are context only. The default sender-side bounce cutoff is inclusive at 3% with at least 3
+sender-side bounce events in the same three-day window. No minimum-send floor
+applies; one or two events above 3% are warnings only. It does not imply a
 hard-bounce-only classification. Recipient bounces alone are not a sender-recovery flag.
 
 ## Pool mapping without an existing mapping
@@ -141,7 +143,8 @@ journal before allocating any standby. Schedules without guaranteed single-run
 execution must remain read-only.
 
 For each flagged mailbox, oldest flag first:
-1. Apply the list guard: predominantly recipient-side campaign bounces point at
+1. For bounce-triggered sources, inspect per-inbox failure diagnostics. Skip
+   unresolved classification and recipient-address failures. Apply the list guard: predominantly recipient-side campaign bounces point at
    the list, not automatic sender replacement. DNS and warmup findings remain
    independently visible. Only current, in-scope active memberships are mutable.
 2. Select the oldest eligible, unused standby from the same ESP and compatible

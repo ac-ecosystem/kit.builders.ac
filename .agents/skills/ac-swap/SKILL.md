@@ -10,11 +10,12 @@ fleet dashboard and evidence report. There is no Slack connection, proposal queu
 Start in dry-run; changing the skill does not authorize changes to a live account.
 
 Read [the operating rules](references/rules.md) first: one mailbox per swap,
-permanent Catch-all exclusion from Primary, 3% sender-side bounce threshold and
-no rotation. Domain aggregates alone cannot select a mailbox.
+permanent Catch-all exclusion from Primary, 3% sender-side bounce rate plus at least three sender-side failures in three
+complete UTC days, and no rotation. One or two events produce a warning only. Domain aggregates alone cannot select a mailbox.
 
 Read [the contract](references/swap-contract.md) for pool rules, snapshot fields,
 reporting and execution. For PlusVibe read [its mapping](references/plusvibe.md).
+For launch preparation, use [the GTM pilot checklist](../../../docs/ac-swap-pilot.md).
 Use [builders.ac signals](references/deliverability.md) when its MCP is available.
 
 ## Boundaries

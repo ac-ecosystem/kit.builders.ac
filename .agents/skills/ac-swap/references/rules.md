@@ -22,6 +22,7 @@ The helper evaluates evidence and simulates one pair. It is not a live executor.
   Catch-all history excludes the entire domain from Primary.
 - Preserve configured roles and captured lane assignments. Do not allocate pools
   using percentages. Old `standby_share` / `catchall_share` settings are ignored.
+  The old `bounce_min_sends` setting is also ignored; `bounce_min_events` is 3.
 - No rotation, automatic cooldown, automatic return to sending, automatic purchase
   or automatic warmup changes. Preserve existing provider settings and respect
   actual available capacity; a mailbox with zero current capacity is not ready.
@@ -32,16 +33,18 @@ The helper evaluates evidence and simulates one pair. It is not a live executor.
 | --- | --- |
 | Fresh DNS failure | Configuration review; investigate. No automatic swap from a provider flag alone. |
 | Mailbox warmup inbox rate <90% | Recovery candidate with ≥50 classified warmup results over seven complete UTC dates ending yesterday. |
-| Mailbox sender-side bounce rate ≥3% | Recovery candidate over three complete UTC dates ending yesterday, with ≥50 sends per mailbox. |
+| Mailbox sender-side bounce rate ≥3% | Recovery candidate over three complete UTC dates ending yesterday, with at least 3 sender-side bounces per mailbox. |
 | Recipient-side bounces | List issue; do not swap solely for this signal. Independently failing warmup remains actionable. |
 | Stale or missing evidence | Historical finding / unverified. No live decision from cached failures alone. |
 
 Warmup rate is inbox / (inbox + spam + promotion), not the warmup setting and
-not a measurement of campaign inbox placement. The minimum is 50 classified
-warmup results over seven complete UTC dates and 50 campaign sends over three
-complete UTC dates, per mailbox. At 60 sends, two sender-side bounces are 3.33%
-and trigger the rule. At 49 sends, the bounce assessment remains unverified.
-DNS and warmup can still be assessed separately.
+not a measurement of campaign inbox placement. Warmup needs at least 50 classified
+results over seven complete UTC dates. The bounce rule has no minimum-send floor:
+it requires both ≥3% and at least 3 sender-side bounces in the three-day window.
+At 3/20 (15%) or 3/100 (3%), flag a candidate. At 1/10 or 2/60, show a warning
+without selecting a source from bounces alone. At 3/101, the rate is below 3%.
+No sends means the rate is unknown. This is a pilot policy, not a statistical
+confidence guarantee. Campaign size does not change this per-mailbox rule.
 
 The 3% rule uses PlusVibe's **sender-side bounce count / sent count**, not combined
 recipient bounces, and not an assertion that every sender-side bounce is a hard
@@ -57,6 +60,11 @@ another mailbox on its domain is consumed by a same-lane campaign. Cross-lane
 domain conflicts still block qualification.
 Recheck shared failing infrastructure and exact campaign impact before live use.
 Do not count an entire domain as ready from one representative mailbox.
+
+A bounce candidate needs per-inbox failure diagnostics before live execution.
+Confirm a sender-related failure; recipient-address/list failures stay list review.
+If classification cannot be established, report it and skip the pair. A threshold
+breach alone is not execution permission.
 
 Execute only under separate explicit live authorization and a saved active
 campaign include list. Reserve one exact pair, preserve limits and recovery state,

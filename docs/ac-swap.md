@@ -35,6 +35,8 @@ Refresh it with:
 node scripts/swap-workspace.mjs report --dir examples/swap
 ~~~
 
+For a campaign launch, use the [GTM pilot checklist](ac-swap-pilot.md).
+
 ## Start a review
 
 ~~~sh
@@ -68,9 +70,11 @@ from Primary, even after warming or recovery. Persist that history across runs.
 The unit is one mailbox. Domain health is context, not permission to swap every
 mailbox. The default signal rules are fresh DNS, a 90% seven-day warmup inbox rate,
 and a 3% sender-side bounce cutoff over three complete UTC days. Each mailbox
-needs ≥50 classified warmup results over the seven-day window and ≥50 sends over
-the three-day window for the corresponding rule to evaluate. Insufficient data
-leaves that assessment unverified; other checks can still be assessed.
+needs ≥50 classified warmup results over the seven-day window. The bounce rule
+requires both ≥3% sender-side bounces and at least 3 sender-side bounce events
+over three complete UTC days, with no minimum-send floor. One or two events
+above 3% produce a warning, not a bounce-based replacement candidate. Confirm
+sender-related failure diagnostics before a live swap; no sends means unknown.
 
 A qualified standby needs individual evidence, explicit target lane and domain
 standby designation, at least 15 known warming days, fresh passing health, nonzero
