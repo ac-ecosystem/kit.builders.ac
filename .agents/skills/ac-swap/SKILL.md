@@ -15,6 +15,10 @@ complete UTC days, and no rotation. One or two events produce a warning only. Do
 
 Read [the contract](references/swap-contract.md) for pool rules, snapshot fields,
 reporting and execution. For PlusVibe read [its mapping](references/plusvibe.md).
+For a reviewable draft swap proposal, use [the pair planner](../../../scripts/swap-plan.mjs)
+and its [synthetic input contract](../../../scripts/swap-plan.test.mjs). It validates
+failure scope/infrastructure and emits native-MCP requests; it never executes them.
+The active-only execution boundary below is unchanged.
 For launch preparation, use [the GTM pilot checklist](../../../docs/ac-swap-pilot.md).
 Use [builders.ac signals](references/deliverability.md) when its MCP is available.
 
