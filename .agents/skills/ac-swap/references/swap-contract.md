@@ -1,5 +1,8 @@
 # Fleet review and execution contract
 
+Read [operating rules](rules.md) for the confirmed policy. Swaps are one mailbox
+per pair; domain summaries are diagnostic context. No rotation is implemented.
+
 ## Local workspace
 
 One Git-ignored swap/ directory contains exactly:
@@ -65,13 +68,32 @@ campaign memberships relevant to exclusion. Set coverage.complete only for a
 complete declared scope; a selected subset cannot establish fleet-wide standby
 absence. Preserve data failure and scope limits in the description and notes.
 
+### Individual mailbox records
+
+An optional `mailboxes` array permits per-mailbox review. Each row has `id`,
+`email`, `domain`, `memberships`, `membership_complete`, `sent`, `sender_bounces`,
+`recipient_bounces`, `capacity_today`, `warmup_age_days`, `warmup`, and `dns` with
+exactly the same count/null rules as a domain row. It also has `ever_catchall`
+(true / false / null) and `standby_for` (primary / catchall / unknown). Keep these
+private. Parent domain memberships are the union of mailbox memberships; never
+substitute the domain union for an individual mailbox's memberships. Partial
+mailbox samples cannot establish full availability. Include campaign
+`assigned_mailboxes` only after an exact membership read; the simulator requires
+this count and never derives a baseline from domain membership unions. The synthetic fixture includes
+one affected mailbox and one qualified standby as examples.
+
+Without individual evidence, review domain findings but select no source mailbox
+and count no verified standbys. Before execution also verify failure-infrastructure
+separation. The helpers do not implement provider mutation or locking.
+
 Warmup inbox rate = inbox / (inbox + spam + promotion). Show unclassified
-sends separately. Require at least warmup_min_results classified domain results
-(default 200), seven complete UTC dates, and a window ending yesterday UTC.
+sends separately. Require at least warmup_min_results classified results for the evaluated record
+(default 50), seven complete UTC dates, and a window ending yesterday UTC.
 DNS results must be within 24 hours of observed_at. These are configurable policy
 assumptions, not proof of campaign placement. The sending window must match
 bounce_window_days before applying a bounce threshold; longer retrospective
-windows are context only. Recipient bounces alone are not a sender-recovery flag.
+windows are context only. The default sender-side bounce cutoff is inclusive at 3%. It does not imply a
+hard-bounce-only classification. Recipient bounces alone are not a sender-recovery flag.
 
 ## Pool mapping without an existing mapping
 
@@ -84,23 +106,21 @@ The report does not invent resting cycles; show rest only with provider evidence
 2. For the observed view, infer lane membership from the reviewed campaign mapping.
    Label name-based campaign mapping as inferred. Membership in both lanes is a
    conflict, not an automatic choice of one. Current assignments are not history.
-3. For the proposed view only, healthy unresolved domains are sorted by name
-   within each ESP. Allocate ceil(10% of domains) to hypothetical standby and
-   ceil(20%) to catchall, leaving the remainder primary. Shares are editable.
-   Exclude recovery, failed DNS, missing/stale evidence and unknown ESPs.
-   This deterministic allocation demonstrates isolation; it does not optimize
-   revenue, know supplier quality or establish tenant independence.
+3. Preserve explicit roles and captured campaign lanes. Unmapped inventory stays
+   unassigned; never redistribute it using percentages. Persist Catch-all history
+   in catchall_history_domains; no mailbox on a previously Catch-all domain may
+   enter Primary. Unknown history blocks Primary qualification.
 4. Never assign two roles to one domain. Same-domain separation alone does not
    prove tenant/IP independence; report missing infrastructure grouping.
 5. Verified standby capacity needs explicit designation, sufficient known age,
    fresh passing DNS and warmup health, complete scope/membership evidence and no
-   active or draft attachment. A proposed pool never becomes a verified standby
+   campaign attachment of any status. Readiness is per mailbox, not per domain. A proposed pool never becomes a verified standby
    pool automatically. Exact mailbox eligibility is rechecked at execution.
 
 Without verified standbys, report the gap and rehearse the steps using a stated
-hypothetical replacement quantity. No fake mailbox identities or successful swap
-claims are needed. Count reserve targets against unique inspected campaign
-inventory, label that denominator, and never claim these are live fleet counts.
+hypothetical one-mailbox pair. No fake mailbox identities or successful swap
+claims are needed. Report replacement needs from individually flagged mailboxes. Refill consumed
+standbys one-for-one; do not infer purchase quantities from a fleet percentage.
 Refill recommendations do not place orders. Existing pool inventory must be
 verified before making a purchase recommendation.
 
@@ -112,6 +132,9 @@ old decisions and dry-run results never enable live mode. Uncertain signals,
 incomplete inventory, membership conflicts or insufficient replacements stop
 the affected pair. The report-only helper does not validate all mailbox-level
 eligibility; the agent must do that here.
+
+No eligible spare means skip and report a shortage. An attach failure leaves the
+source attached; the operator handles any urgent sending stop. No rotation occurs.
 
 Use one non-overlapping executor. If an earlier run is unfinished, resume its
 journal before allocating any standby. Schedules without guaranteed single-run

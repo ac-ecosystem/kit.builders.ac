@@ -19,7 +19,7 @@ export function dashboardData(r) {
     warmupRate: d.warmupRate, warmupResults: d.classified,
     sent: d.sent, senderBounces: d.sender_bounces, recipientBounces: d.recipient_bounces,
     capacity: d.capacity_today, warmupAge: d.warmup_age_days,
-    ready: d.ready, pool: d.explicit ?? null, lanes: [...new Set(d.campaigns.map((c) => c.lane).filter((l) => l !== 'unknown'))],
+    ready: d.ready, readyMailboxes: d.readyMailboxes, pool: d.explicit ?? null, lanes: [...new Set(d.campaigns.map((c) => c.lane).filter((l) => l !== 'unknown'))],
     overlap: d.laneConflict, campaigns: d.memberships.map((id) => campaignKeys.get(id)),
     dns: { spf: d.dns.spf, dkim: d.dns.dkim, dmarc: d.dns.dmarc, mx: d.dns.mx, fresh: d.dnsFresh },
     reasons: d.reasons.map(publicText),
@@ -36,7 +36,7 @@ export function dashboardData(r) {
   }));
   const pool = (role) => {
     const ds = domains.filter((d) => d.pool === role || (role !== 'standby' && d.lanes.includes(role)));
-    return { domains: ds.length, mailboxes: sum(ds, 'mailboxes'), attention: sum(ds.filter((d) => d.reasons.length), 'mailboxes'), ready: sum(ds.filter((d) => d.ready), 'mailboxes') };
+    return { domains: ds.length, mailboxes: sum(ds, 'mailboxes'), attention: sum(ds.filter((d) => d.reasons.length), 'mailboxes'), ready: sum(ds, 'readyMailboxes') };
   };
   const scenario = (failure) => {
     const sim = simulate(r, { failVerification: failure });
@@ -64,7 +64,7 @@ export function dashboardData(r) {
       attention: domains.filter((d) => d.reasons.length).length,
       overlap: sum(domains.filter((d) => d.overlap), 'mailboxes'),
       unassigned: domains.filter((d) => !d.pool && !d.lanes.length).length,
-      ready: sum(domains.filter((d) => d.ready), 'mailboxes'),
+      ready: sum(domains, 'readyMailboxes'),
     },
     pools: { primary: pool('primary'), catchall: pool('catchall'), standby: pool('standby') },
     domains, campaigns, simulation: { success: scenario(false), failure: scenario(true) },

@@ -1,2 +1,2 @@
 run_id,observed_at,mode,mailboxes,attention_domains,mixed_domains,verified_standby_mailboxes
-example-20261117-001,2026-11-17T02:36:00Z,dry-run,1050,2,2,50
+example-20261117-001,2026-11-17T02:36:00Z,dry-run,1050,2,2,1

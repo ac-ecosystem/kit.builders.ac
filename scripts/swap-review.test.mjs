@@ -68,25 +68,34 @@ test('recipient-side bounces alone do not trigger sender recovery', () => {
   assert.equal(find(review(s, config()), d.domain).health, 'healthy');
 });
 
-test('standby needs designation, age, complete coverage and no draft commitment', () => {
-  const s = clone(); const name = 'example-standby.net';
-  assert.equal(find(review(s, config()), name).ready, true);
-  assert.equal(find(review(s, config({ standby_domains: [] })), name).ready, false);
-  for (const update of [{ warmup_age_days: null }, { warmup_age_days: 14 }, { membership_complete: false }, { memberships: ['campaign-example-next'] }]) {
-    const c = clone(); Object.assign(c.domains.find((d) => d.domain === name), update);
-    assert.equal(find(review(c, config()), name).ready, false);
+test('standby readiness is counted per mailbox and requires complete individual evidence', () => {
+  const s = clone(), id = 'mailbox-example-standby';
+  const mailbox = (r) => r.mailboxes.find((m) => m.id === id);
+  assert.equal(mailbox(review(s, config())).ready, true);
+  assert.equal(find(review(s, config()), 'example-standby.net').ready, false);
+  assert.equal(review(s, config()).totals.ready, 1);
+  assert.equal(mailbox(review(s, config({ standby_domains: [] }))).ready, false);
+  for (const change of [
+    (s) => s.mailboxes[1].warmup_age_days = null,
+    (s) => s.mailboxes[1].warmup_age_days = 14,
+    (s) => s.mailboxes[1].membership_complete = false,
+    (s) => s.coverage.complete = false,
+    (s) => s.mailboxes[1].capacity_today = 0,
+    (s) => s.mailboxes[1].ever_catchall = null,
+    (s) => { s.domains.find((d) => d.domain === 'example-standby.net').memberships = ['campaign-example-next']; s.mailboxes[1].memberships = ['campaign-example-next']; },
+  ]) {
+    const other = clone(); change(other);
+    assert.equal(mailbox(review(other, config())).ready, false);
   }
-  s.coverage.complete = false;
-  assert.equal(find(review(s, config()), name).ready, false);
 });
 
-test('forecast arithmetic is explicit and does not consume observed inventory', () => {
-  const r = review(clone(), config()); const f = forecast(r);
-  assert.equal(f.replacements, 50);
-  assert.equal(f.assumedStandbys, 100);
-  assert.equal(f.remaining, 50);
-  assert.equal(f.refill, Math.max(0, r.totals.target - 50));
-  assert.equal(r.totals.ready, 50);
+test('one-mailbox forecast is illustrative and never consumes observed standby evidence', () => {
+  const r = review(clone(), config()), f = forecast(r);
+  assert.equal(f.replacements, 1);
+  assert.equal(f.assumedStandbys, 2);
+  assert.equal(f.remaining, 1);
+  assert.equal(f.refill, 1);
+  assert.equal(r.totals.ready, 1);
   assert.match(f.assumptions, /illustrative/);
 });
 
@@ -166,11 +175,11 @@ test('simulation verifies all replacements before removing the source', () => {
   assert.equal(result.state.ready, result.remaining + result.refill);
 });
 
-test('failed verification keeps the source and exposes partial attachments', () => {
+test('failed verification keeps the source and exposes an unverified attachment', () => {
   const result = simulate(review(clone(), config()), { failVerification: true });
   assert.equal(result.success, false);
   assert.equal(result.state.sourceAssigned, result.replacements);
-  assert.equal(result.state.replacementAssigned, Math.floor(result.replacements / 2));
+  assert.equal(result.state.replacementAssigned, result.replacements);
   assert.equal(result.state.assigned, result.baseline + result.state.replacementAssigned);
   assert.equal(result.state.recovery, 0);
   assert.equal(result.state.warming, 0);
@@ -183,11 +192,12 @@ test('simulation is deterministic and never changes the observed snapshot', () =
   assert.equal(JSON.stringify(s), before);
 });
 
-test('a report with no qualifying incident does not invent a replacement', () => {
-  const s = clone(); s.domains = s.domains.filter((d) => d.domain !== 'example-decline.com'); s.daily_warmup = [];
+test('domain-only evidence cannot select or replace a mailbox', () => {
+  const s = clone(); delete s.mailboxes;
   const r = review(s, config());
   assert.equal(simulate(r), null);
-  assert.match(simulationMarkdown(r), /No qualifying warmup incident/);
+  assert.equal(r.totals.ready, 0);
+  assert.match(simulationMarkdown(r), /Individual mailbox evidence/);
 });
 
 test('dashboard exports observed pools without private fields or hypothetical stock', async () => {
@@ -207,7 +217,7 @@ test('dashboard exports observed pools without private fields or hypothetical st
   assert.equal(d.campaigns[1].sent, null);
   assert.equal(d.domains.find((x) => x.name === 'example-unknown.com').sent, null);
   const html = await dashboardHtml(r);
-  for (const secret of [s.workspace_id, s.campaigns[0].id, 'PRIVATE-NOTE', 'private@example.com', 'password=secret']) assert.ok(!html.includes(secret));
+  for (const secret of [s.workspace_id, s.campaigns[0].id, ...s.mailboxes.flatMap((m) => [m.id, m.email]), 'PRIVATE-NOTE', 'private@example.com', 'password=secret']) assert.ok(!html.includes(secret));
   const json = html.match(/window.FLEET_DATA=(.*?);<\/script>/s)[1];
   assert.equal(json.includes('</script>'), false);
   assert.match(JSON.parse(json).campaigns[0].name, /\$&/);
@@ -243,4 +253,98 @@ test('each report refreshes dashboard and configured Site while retaining run id
     await assert.rejects(generateReport(dir), /identity/);
     assert.equal(await readFile(join(site, 'dist/index.html'), 'utf8'), after);
   } finally { await rm(temp, { recursive: true, force: true }); }
+});
+
+test('explicit and observed roles are preserved without percentage-based reassignment', () => {
+  const r = review(clone(), config());
+  assert.equal(find(r, 'example-primary.com').proposedPool, 'primary');
+  assert.equal(find(r, 'example-catchall.com').proposedPool, 'catchall');
+  assert.equal(find(r, 'example-unknown.com').proposedPool, 'hold');
+});
+
+test('stale DNS, warmup and sending breaches stay historical and cannot select a source', () => {
+  const s = clone(); s.observed_at = '2026-11-21T02:36:00Z';
+  s.mailboxes[0].sent = 200; s.mailboxes[0].sender_bounces = 10;
+  const r = review(s, config());
+  assert.equal(find(r, 'example-decline.com').health, 'unverified');
+  assert.equal(r.mailboxes[0].health, 'unverified');
+  assert.equal(r.mailboxes[0].replaceCandidate, false);
+  assert.ok(r.mailboxes[0].historicalFindings.length > 0);
+  assert.equal(simulate(r), null);
+});
+
+test('catch-all history permanently blocks Primary across sibling mailboxes and cleared memberships', () => {
+  for (const history of [true, null]) {
+    const s = clone(); s.mailboxes[1].ever_catchall = history;
+    assert.equal(review(s, config()).mailboxes[1].ready, false);
+  }
+  const s = clone();
+  assert.equal(review(s, config({ catchall_history_domains: ['example-standby.net'] })).mailboxes[1].ready, false);
+  const sibling = structuredClone(s.mailboxes[1]); sibling.id = 'mailbox-example-sibling'; sibling.email = 'other@example-standby.net'; sibling.ever_catchall = true;
+  s.mailboxes.push(sibling);
+  assert.equal(review(s, config()).mailboxes[1].primaryEligible, false);
+  s.mailboxes[1].standby_for = 'catchall';
+  assert.equal(review(s, config()).mailboxes[1].ready, true);
+});
+
+test('completed cross-lane assignments cannot qualify a standby', () => {
+  const s = clone();
+  s.domains.find((d) => d.domain === 'example-standby.net').memberships = ['campaign-example-primary', 'campaign-example-catchall'];
+  const r = review(s, config());
+  assert.equal(r.mailboxes[1].ready, false);
+  assert.equal(find(r, 'example-standby.net').ready, false);
+});
+
+test('3% applies inclusively to sender-side bounces with the sample guard', () => {
+  for (const [sent, bounces, expected] of [[200, 6, true], [200, 5, false], [60, 2, true], [49, 2, false]]) {
+    const s = clone(), m = s.mailboxes[0];
+    m.warmup = { inbox: 250, spam: 0, promotion: 0, sent: 250 };
+    m.sent = sent; m.sender_bounces = bounces;
+    const checked = review(s, config()).mailboxes[0];
+    assert.equal(checked.replaceCandidate, expected);
+  }
+});
+
+test('a poor mailbox does not cause selection of its healthy domain peers', () => {
+  const s = clone(), sibling = structuredClone(s.mailboxes[0]);
+  sibling.id = 'mailbox-example-healthy'; sibling.email = 'healthy@example-primary.com';
+  sibling.warmup = { inbox: 250, spam: 0, promotion: 0, sent: 250 };
+  s.mailboxes.push(sibling);
+  assert.deepEqual(review(s, config()).mailboxes.filter((m) => m.replaceCandidate).map((m) => m.id), ['mailbox-example-source']);
+  assert.equal(simulate(review(s, config())).replacements, 1);
+});
+
+test('Catch-all history persists after the source assignments disappear', async () => {
+  const parent = await mkdtemp(join(tmpdir(), 'swap-history-')), dir = join(parent, 'workspace');
+  try {
+    await init(dir);
+    const md = (await readFile(join(dir, 'swap.md'), 'utf8')).replace('sequencer_workspace_id: null', 'sequencer_workspace_id: '+JSON.stringify(fixture.workspace_id));
+    await writeFile(join(dir, 'swap.md'), md);
+    const first = clone(); await writeFile(join(dir, 'snapshot.json'), JSON.stringify(first));
+    await generateReport(dir);
+    const next = clone(); next.domains.find((d) => d.domain === 'example-catchall.com').memberships = [];
+    await writeFile(join(dir, 'snapshot.json'), JSON.stringify(next));
+    const result = await generateReport(dir);
+    assert.ok(result.catchallHistory.includes('example-catchall.com'));
+    const saved = readConfig(await readFile(join(dir, 'swap.md'), 'utf8')).config;
+    assert.ok(saved.catchall_history_domains.includes('example-catchall.com'));
+  } finally { await rm(parent, { recursive: true, force: true }); }
+});
+
+test('campaign membership baseline must be observed, not inferred from domain unions', () => {
+  const s = clone(); delete s.campaigns.find((c) => c.status === 'DRAFT').assigned_mailboxes;
+  assert.equal(simulate(review(s, config())), null);
+});
+
+test('a Catch-all standby cannot hide a Primary replacement shortage', () => {
+  const s = clone(); s.mailboxes[1].standby_for = 'catchall';
+  const r = review(s, config());
+  assert.equal(r.totals.ready, 1);
+  assert.equal(r.totals.shortage, 1);
+  assert.deepEqual(r.replacementNeeds, [{esp:'microsoft', lane:'primary', required:1, available:0, shortage:1}]);
+});
+
+test('using one standby does not disqualify unused same-lane sibling mailboxes', () => {
+  const s = clone(); s.domains.find((d) => d.domain === 'example-standby.net').memberships = ['campaign-example-next'];
+  assert.equal(review(s, config()).mailboxes[1].ready, true);
 });

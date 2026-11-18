@@ -19,9 +19,10 @@ zero. A saved presentation timestamp is separate from the observation windows.
 Observed pool counts use explicit roles and captured campaign memberships, not
 provisional percentage allocations. A mailbox shared across lanes is counted in
 both lane cards; the overlap indicator explains this. Standby requires designation;
-readiness separately requires passing health, age and membership gates. Partial
-scope never establishes the absence of stock elsewhere. The rehearsal uses assumed
-inventory only in its simulation view. Campaign totals are lifetime where provided;
+readiness separately requires each mailbox's passing health, age, target lane and
+complete membership evidence. Domain-only snapshots establish no ready mailbox. Partial
+scope never establishes the absence of stock elsewhere. The rehearsal uses one individually evidenced mailbox and assumed inventory only
+in its simulation view. No source is invented from a domain aggregate. Campaign totals are lifetime where provided;
 domain send/bounce counts use the stated sending window. Warmup is not campaign
 placement. Add optional nonnegative campaign `sent_count` / `bounced_count` values
 only when observed; omit them when unavailable. Record campaign `lane_source`

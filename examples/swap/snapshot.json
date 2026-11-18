@@ -6,7 +6,7 @@
   "observed_at": "2026-11-17T02:36:00Z",
   "coverage": {
     "complete": true,
-    "description": "Synthetic six-domain fleet. Every name, identifier and observation is illustrative."
+    "description": "Synthetic six-domain fleet with two individually observed mailboxes. Domain totals are context; only individual evidence qualifies a swap or standby."
   },
   "windows": {
     "warmup": {
@@ -23,19 +23,22 @@
       "id": "campaign-example-primary",
       "name": "Example deliverable campaign",
       "lane": "primary",
-      "status": "COMPLETED"
+      "status": "COMPLETED",
+      "assigned_mailboxes": 900
     },
     {
       "id": "campaign-example-catchall",
       "name": "Example catch-all campaign",
       "lane": "catchall",
-      "status": "COMPLETED"
+      "status": "COMPLETED",
+      "assigned_mailboxes": 150
     },
     {
       "id": "campaign-example-next",
       "name": "Example next primary campaign",
       "lane": "primary",
-      "status": "DRAFT"
+      "status": "DRAFT",
+      "assigned_mailboxes": 800
     }
   ],
   "limitations": "Synthetic evidence supports offline testing only; no external operation was performed.",
@@ -114,8 +117,8 @@
       "capacity_today": 1600,
       "warmup_age_days": 20,
       "warmup": {
-        "inbox": 3465,
-        "spam": 35,
+        "inbox": 3150,
+        "spam": 350,
         "promotion": 0,
         "sent": 3500
       },
@@ -311,5 +314,66 @@
       "sent": 500
     }
   ],
-  "evidence_kind": "synthetic"
+  "evidence_kind": "synthetic",
+  "mailboxes": [
+    {
+      "memberships": [
+        "campaign-example-primary",
+        "campaign-example-next"
+      ],
+      "membership_complete": true,
+      "sent": 100,
+      "sender_bounces": 0,
+      "recipient_bounces": 0,
+      "capacity_today": 20,
+      "warmup_age_days": 20,
+      "warmup": {
+        "inbox": 200,
+        "spam": 60,
+        "promotion": 0,
+        "sent": 260
+      },
+      "dns": {
+        "spf": true,
+        "dkim": true,
+        "dmarc": true,
+        "mx": true,
+        "checked_at": "2026-11-17T02:36:00Z",
+        "source": "synthetic fixture"
+      },
+      "domain": "example-primary.com",
+      "id": "mailbox-example-source",
+      "email": "sender@example-primary.com",
+      "ever_catchall": false,
+      "standby_for": "unknown"
+    },
+    {
+      "memberships": [],
+      "membership_complete": true,
+      "sent": 100,
+      "sender_bounces": 0,
+      "recipient_bounces": 0,
+      "capacity_today": 20,
+      "warmup_age_days": 20,
+      "warmup": {
+        "inbox": 245,
+        "spam": 5,
+        "promotion": 0,
+        "sent": 250
+      },
+      "dns": {
+        "spf": true,
+        "dkim": true,
+        "dmarc": true,
+        "mx": true,
+        "checked_at": "2026-11-17T02:36:00Z",
+        "source": "synthetic fixture"
+      },
+      "domain": "example-standby.net",
+      "id": "mailbox-example-standby",
+      "email": "spare@example-standby.net",
+      "ever_catchall": false,
+      "standby_for": "primary"
+    }
+  ]
 }

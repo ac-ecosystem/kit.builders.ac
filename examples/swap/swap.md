@@ -10,12 +10,11 @@ catchall_domains: []
 standby_domains: ["example-standby.net"]
 ready_days: 15
 warmup_threshold: 0.9
-warmup_min_results: 200
+warmup_min_results: 50
 bounce_window_days: 3
-bounce_threshold: 0.05
-bounce_min_sends: 200
-standby_share: 0.1
-catchall_share: 0.2
+bounce_threshold: 0.03
+bounce_min_sends: 50
+catchall_history_domains: ["example-catchall.com","example-config.com","example-decline.com"]
 ---
 
 # Fleet review

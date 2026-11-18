@@ -26,11 +26,14 @@ dashboard, and continue with sequencer signals only.
    catalogue ID for that zone and the inspected date. Report every inspected mailbox on each
    domain whose verdict is listed. Show the zone name in the report. Treat
    `unknown` as no signal.
-2. **Domain bounce.** From `getDeliverabilityBounces`, report every inspected mailbox
-   on a domain whose `rate` is at least `bounce_threshold` and whose
+2. **Domain bounce.** From `getDeliverabilityBounces`, report domain context for a domain whose `rate` is at least `bounce_threshold` and whose
    `sent` is at least `bounce_min_sends`, over the matching configured window. If `rate` is null, skip the domain
    and show its `rate_unavailable` reason in the dashboard. If `sent_incomplete` is
    true, mention it next to the number.
+
+Domain bounce/blacklist findings do not identify which individual mailbox should
+be swapped. Use each mailbox's own sequencer evidence and the operating rules;
+a 3% domain rate is not a 3% mailbox rate.
 
 These numbers come from the builders.ac message trace, so they exist only for
 mailboxes builders.ac hosts. Other mailboxes rely on sequencer signals.

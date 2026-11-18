@@ -9,6 +9,10 @@ One run collects evidence, classifies health, selects replacements and saves a
 fleet dashboard and evidence report. There is no Slack connection, proposal queue or per-swap approval.
 Start in dry-run; changing the skill does not authorize changes to a live account.
 
+Read [the operating rules](references/rules.md) first: one mailbox per swap,
+permanent Catch-all exclusion from Primary, 3% sender-side bounce threshold and
+no rotation. Domain aggregates alone cannot select a mailbox.
+
 Read [the contract](references/swap-contract.md) for pool rules, snapshot fields,
 reporting and execution. For PlusVibe read [its mapping](references/plusvibe.md).
 Use [builders.ac signals](references/deliverability.md) when its MCP is available.
@@ -39,7 +43,7 @@ Use [builders.ac signals](references/deliverability.md) when its MCP is availabl
    recognized and left untouched; use the migration instructions in the contract.
 3. Record workspace, campaign scope and pool assignments in swap.md. Defaults
    are dry-run and schedule: manual. Missing pool assignments do not block a
-   review: derive a clearly provisional mapping as described in the contract.
+   review: preserve observed lanes and show unresolved inventory without allocating percentages.
 4. If builders.ac MCP is available, verify its account before using its data.
    Otherwise continue with sequencer evidence and state which signals are absent.
 5. Do not create an automation during setup by default. After a useful manual
@@ -64,7 +68,9 @@ Use [builders.ac signals](references/deliverability.md) when its MCP is availabl
    not a definitive root cause. Existing placement-test results are separate
    evidence; do not confuse them with warmup or start tests in this workflow.
 4. Build the minimal snapshot.json specified in the contract. Include a daily
-   warmup timeline when available. Resolve lane labels from explicit config
+   warmup timeline when available. Collect the mailbox-level records in the
+   contract before selecting a source or counting qualified standbys. Persist
+   Catch-all domain history across runs; unknown history cannot qualify Primary. Resolve lane labels from explicit config
    first; campaign-name inference must be labeled. Missing lane = unknown.
 5. Run node scripts/swap-workspace.mjs report. It refreshes dashboard.html
    (the primary view), report.md (Mermaid walkthrough), report.html and swap.md,
@@ -75,7 +81,7 @@ Use [builders.ac signals](references/deliverability.md) when its MCP is availabl
    Artifact when supported; in Codex use a public Site. Reuse its saved identity
    and URL. Never claim a local file or private preview is public.
 7. In dry-run, skip live execution. Show the dashboard link and key findings.
-   Identify actual    qualified standbys separately from hypothetical capacity. If none can be
+   Identify actual qualified standbys separately from hypothetical capacity. If none can be
    proven, show a replacement requirement and a clearly labeled rehearsal; do
    not claim a completed swap or restored delivery.
 8. In authorized live mode, use the execution procedure in the contract. Recheck

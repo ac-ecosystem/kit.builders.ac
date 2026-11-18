@@ -79,11 +79,10 @@ export async function init(directory) {
   const config = {
     mode: defaults.mode, sequencer: 'plusvibe', sequencer_workspace_id: null,
     schedule: defaults.schedule, timezone: 'UTC', live_campaign_include: [],
-    primary_domains: [], catchall_domains: [], standby_domains: [],
+    primary_domains: [], catchall_domains: [], standby_domains: [], catchall_history_domains: [],
     ready_days: defaults.ready_days, warmup_threshold: defaults.warmup_threshold,
     warmup_min_results: defaults.warmup_min_results, bounce_window_days: defaults.bounce_window_days,
     bounce_threshold: defaults.bounce_threshold, bounce_min_sends: defaults.bounce_min_sends,
-    standby_share: defaults.standby_share, catchall_share: defaults.catchall_share,
   };
   const files = {
     'swap.md': '---\n' + Object.entries(config).map(([k, v]) => k + ': ' + JSON.stringify(v)).join('\n') + '\n---\n\n# Fleet review\n\nNot run yet. Collect a snapshot using ac-swap, then run the report command.\n',

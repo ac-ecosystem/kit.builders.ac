@@ -14,7 +14,7 @@ get_workspaces. Tool schemas take precedence; this mapping was checked on
 | Inventory | list_email_accounts | Use exact domain, exact email or tag filter; returns accounts; provider is top-level |
 | Mailbox sending stats | get_bulk_email_account_stats | Target up to 100 email_acc_ids, include_chart=false; accounts array, each with header totals |
 | Warmup | get_bulk_warmup_stats | Same targeting, include_chart=false; max 14 dates and 14-day retention; use seven complete dates |
-| Authentication checks | check_email_account_health | accounts takes EMAIL ADDRESSES, not domains; pass one representative address per domain; success_list carries spf/dkim/dmarc/mx booleans even when checks failed |
+| Authentication checks | check_email_account_health | accounts takes EMAIL ADDRESSES, not domains; a domain representative is diagnostic context only; check each selected source/standby address before live use; success_list carries spf/dkim/dmarc/mx booleans even when checks failed |
 | Sending proof | list_all_leads then get_campaign_emails | Resolve lead email_account_id to a sender; read actual messages and sent_on/eaccount for attribution; do not save message bodies or lead PII in reports |
 | Tags | list_tags | ea_count and camp_count describe usage; a tag change can modify campaign membership |
 | Existing placement results | list_email_placement_tests and result readers | Read-only context; no new seed sends in this workflow |
@@ -39,7 +39,8 @@ calling inventory unused. A mailbox committed to a draft is not freely available
   workspace totals cannot establish which campaign actually sent.
 - Warmup inbox rate is inbox / (inbox + spam + promotion), matching classified
   outcomes. Display unclassified sent counts separately. Aggregate counts across
-  a domain; do not average mailbox percentages.
+  a domain for context; retain each mailbox separately for swap decisions. Do not
+  average mailbox percentages or replace peers from a domain aggregate.
 - get_bulk_warmup_stats chart_data uses dt for ISO date and date for display.
   Daily records have sent/inbox/spam/promotion. Sending chart records use date
   for ISO date and total_sent_count for volume.
@@ -52,7 +53,11 @@ calling inventory unused. A mailbox committed to a draft is not freely available
   Readiness requires fresh evidence, not payload.analytics.health_scores=-1.
 - capacity_today comes from payload.campaign_limit_today. Configured daily_limit
   is a cap; rest_cycles, ramp/randomization and other campaigns affect capacity.
-  A rest cycle counts actual sending days, not necessarily calendar days.
+  Rotation is outside this workflow; preserve settings and respect the reported capacity.
+
+Record verified prior Catch-all use at domain level in swap.md. Never erase this
+when campaign membership disappears. Primary standbys require verified clean
+history across the domain; unknown is not clean.
 
 ## Authorized execution only
 

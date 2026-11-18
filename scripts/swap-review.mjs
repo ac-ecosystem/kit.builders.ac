@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { assessSignals, reviewMailboxes } from './swap-policy.mjs';
 import { simulationMarkdown } from './swap-simulation.mjs';
 import { reportStamp, systemHtml } from './swap-scenarios.mjs';
 
@@ -14,9 +15,9 @@ function requireThat(ok, message) { if (!ok) throw new Error(message); }
 
 export const defaults = {
   mode: 'dry-run', schedule: 'manual', ready_days: 15, warmup_threshold: 0.9,
-  warmup_min_results: 200, bounce_window_days: 3, bounce_threshold: 0.05,
-  bounce_min_sends: 200, standby_share: 0.1, catchall_share: 0.2,
-  primary_domains: [], catchall_domains: [], standby_domains: [], live_campaign_include: [],
+  warmup_min_results: 50, bounce_window_days: 3, bounce_threshold: 0.03,
+  bounce_min_sends: 50,
+  primary_domains: [], catchall_domains: [], standby_domains: [], catchall_history_domains: [], live_campaign_include: [],
 };
 
 export function readConfig(markdown) {
@@ -30,10 +31,9 @@ export function readConfig(markdown) {
     try { config[m[1]] = JSON.parse(value); } catch { config[m[1]] = value; }
   }
   requireThat(['dry-run', 'live'].includes(config.mode), 'mode must be dry-run or live');
-  for (const key of ['warmup_threshold', 'bounce_threshold', 'standby_share', 'catchall_share']) {
+  for (const key of ['warmup_threshold', 'bounce_threshold']) {
     requireThat(Number.isFinite(config[key]) && config[key] >= 0 && config[key] <= 1, key + ' must be between 0 and 1');
   }
-  requireThat(config.standby_share + config.catchall_share < 1, 'pool shares must leave primary capacity');
   for (const key of ['ready_days', 'warmup_min_results', 'bounce_window_days', 'bounce_min_sends']) {
     requireThat(Number.isInteger(config[key]) && config[key] > 0, key + ' must be a positive integer');
   }
@@ -46,6 +46,7 @@ export function readConfig(markdown) {
       assigned.add(domain);
     }
   }
+  requireThat(Array.isArray(config.catchall_history_domains) && config.catchall_history_domains.every((d) => typeof d === 'string' && d === d.toLowerCase()), 'invalid catchall history');
   requireThat(Array.isArray(config.live_campaign_include), 'live_campaign_include must be a JSON array');
   if (config.mode === 'live') {
     requireThat(config.live_campaign_include.length > 0, 'live mode needs an explicit campaign include list');
@@ -74,6 +75,7 @@ export function validateSnapshot(s) {
     campaignIds.add(c.id);
     requireThat(typeof c.name === 'string' && ['primary', 'catchall', 'unknown'].includes(c.lane), 'invalid campaign name or lane');
     requireThat(['ACTIVE', 'DRAFT', 'COMPLETED', 'PAUSED'].includes(c.status), 'invalid campaign status');
+    requireThat(c.assigned_mailboxes === undefined || (Number.isInteger(c.assigned_mailboxes) && c.assigned_mailboxes >= 0), 'invalid campaign assignment count');
   }
   const domainNames = new Set();
   for (const d of s.domains) {
@@ -97,6 +99,23 @@ export function validateSnapshot(s) {
       requireThat(d.sender_bounces + d.recipient_bounces <= d.sent, 'bounce count exceeds sends');
     }
   }
+  if (s.mailboxes !== undefined) {
+    requireThat(Array.isArray(s.mailboxes), 'mailboxes must be an array');
+    const ids = new Set(), addresses = new Set(), perDomain = new Map();
+    for (const m of s.mailboxes) {
+      requireThat(typeof m.id === 'string' && m.id.length > 0 && !ids.has(m.id), 'duplicate or invalid mailbox ID');
+      requireThat(typeof m.email === 'string' && m.email === m.email.toLowerCase() && m.email.split('@').length === 2 && m.email.indexOf('@') > 0 && m.email.endsWith('@' + m.domain) && !addresses.has(m.email), 'invalid or duplicate mailbox address');
+      requireThat(domainNames.has(m.domain), 'mailbox domain not in snapshot');
+      requireThat([true, false, null].includes(m.ever_catchall), 'mailbox catchall history must be true, false or null');
+      requireThat(['primary', 'catchall', 'unknown'].includes(m.standby_for), 'invalid standby lane');
+      const domain = s.domains.find((d) => d.domain === m.domain);
+      requireThat(Array.isArray(m.memberships) && m.memberships.every((id) => domain.memberships.includes(id)), 'mailbox membership missing from domain summary');
+      ids.add(m.id); addresses.add(m.email);
+      perDomain.set(m.domain, (perDomain.get(m.domain) ?? 0) + 1);
+      requireThat(perDomain.get(m.domain) <= domain.mailboxes, 'mailbox evidence exceeds domain inventory');
+      validateSnapshot({ ...s, domains: [{ ...m, esp: domain.esp, mailboxes: 1 }], mailboxes: undefined, daily_warmup: [] });
+    }
+  }
   const dailyKeys = new Set();
   for (const row of s.daily_warmup ?? []) {
     const key = row.domain + ':' + row.date;
@@ -116,42 +135,34 @@ export function review(snapshot, config = defaults) {
     const campaigns = snapshot.campaigns.filter((c) => d.memberships.includes(c.id));
     const lanes = [...new Set(campaigns.map((c) => c.lane).filter((l) => l !== 'unknown'))];
     const explicit = roles.find((role) => config[role + '_domains'].includes(d.domain));
-    const classified = d.warmup ? d.warmup.inbox + d.warmup.spam + d.warmup.promotion : 0;
-    const warmupRate = classified ? d.warmup.inbox / classified : null;
-    const dnsAge = d.dns.checked_at ? (Date.parse(snapshot.observed_at) - Date.parse(d.dns.checked_at)) / DAY : null;
-    const dnsFresh = dnsAge !== null && dnsAge >= 0 && dnsAge <= 1;
-    const warmupFresh = Date.parse(snapshot.observed_at) - (Date.parse(snapshot.windows.warmup.end) + DAY) < DAY;
-    const failedChecks = checks.filter((key) => d.dns[key] === false);
-    const reasons = [];
-    if (failedChecks.length) reasons.push('Provider DNS check failed: ' + failedChecks.join(', ') + '; investigate configuration');
-    if (warmupRate !== null && classified >= config.warmup_min_results && warmupRate < config.warmup_threshold) reasons.push('Warmup below ' + pct(config.warmup_threshold));
-    const senderRate = d.sent && d.sender_bounces !== null ? d.sender_bounces / d.sent : null;
-    const bounceWindowMatches = days(snapshot.windows.sending.start, snapshot.windows.sending.end) === config.bounce_window_days;
-    if (bounceWindowMatches && d.sent >= config.bounce_min_sends && senderRate !== null && senderRate >= config.bounce_threshold) reasons.push('Sender-side bounce threshold reached');
-    const missing = !dnsFresh || !warmupFresh || checks.some((key) => d.dns[key] === null) || warmupRate === null || classified < config.warmup_min_results || d.esp === 'unknown';
-    const health = failedChecks.length ? 'configuration review' : reasons.length ? 'recovery' : missing ? 'unverified' : 'healthy';
+    const signals = assessSignals(d, snapshot, config);
     const observedPool = explicit ?? (lanes.length > 1 ? 'mixed lanes' : lanes[0] ?? 'unassigned');
-    const occupied = campaigns.some((c) => ['ACTIVE', 'DRAFT'].includes(c.status));
-    const ready = explicit === 'standby' && health === 'healthy' && d.warmup_age_days !== null && d.warmup_age_days >= config.ready_days && d.membership_complete && !occupied && snapshot.coverage.complete;
-    return { ...d, campaigns, warmupRate, classified, senderRate, bounceWindowMatches, dnsFresh, warmupFresh, health, reasons, observedPool, laneConflict: lanes.length > 1, explicit, ready, proposedPool: explicit ?? 'hold' };
+    // Ready counts require individual mailbox evidence below, never domain averages.
+    return { ...d, ...signals, campaigns, observedPool, laneConflict: lanes.length > 1, explicit, ready: false, readyMailboxes: 0, proposedPool: explicit ?? (lanes.length === 1 ? lanes[0] : 'hold') };
   });
-  // This is a domain-level planning scenario, never a live assignment or a ready pool.
-  for (const esp of ['google', 'microsoft']) {
-    const eligible = domains.filter((d) => d.esp === esp && d.health === 'healthy' && !d.explicit).sort((a, b) => a.domain.localeCompare(b.domain, 'en'));
-    const spareCount = Math.ceil(eligible.length * config.standby_share);
-    const catchallCount = Math.min(Math.ceil(eligible.length * config.catchall_share), eligible.length - spareCount);
-    eligible.forEach((d, i) => { d.proposedPool = i < spareCount ? 'standby' : i < spareCount + catchallCount ? 'catchall' : 'primary'; });
+  const mailboxes = reviewMailboxes(snapshot, config, domains);
+  for (const d of domains) {
+    d.readyMailboxes = mailboxes.filter((m) => m.domain === d.domain && m.ready).length;
+    d.ready = d.readyMailboxes === d.mailboxes;
   }
-  const exposure = domains.filter((d) => d.memberships.length);
-  const ready = domains.filter((d) => d.ready).reduce((n, d) => n + d.mailboxes, 0);
-  const target = Math.ceil(exposure.reduce((n, d) => n + d.mailboxes, 0) * config.standby_share);
+  const ready = mailboxes.filter((m) => m.ready).length;
+  const sources = mailboxes.filter((m) => m.replaceCandidate);
+  const groups = [...new Set(sources.map((m) => m.esp + ':' + m.lane))];
+  const replacementNeeds = groups.map((key) => {
+    const [esp, lane] = key.split(':');
+    const required = sources.filter((m) => m.esp === esp && m.lane === lane).length;
+    const available = mailboxes.filter((m) => m.ready && m.esp === esp && m.standby_for === lane && !sources.some((source) => source.domain === m.domain)).length;
+    return { esp, lane, required, available, shortage: Math.max(0, required - available) };
+  });
+  const target = sources.length;
   return {
-    snapshot, config, domains,
+    snapshot, config, domains, mailboxes, replacementNeeds,
+    catchallHistory: [...new Set([...(config.catchall_history_domains ?? []), ...config.catchall_domains, ...domains.filter((d) => d.campaigns.some((c) => c.lane === 'catchall')).map((d) => d.domain), ...(snapshot.mailboxes ?? []).filter((m) => m.ever_catchall === true).map((m) => m.domain)])].sort(),
     totals: {
       mailboxes: domains.reduce((n, d) => n + d.mailboxes, 0),
       attention: domains.filter((d) => d.reasons.length).length,
       mixed: domains.filter((d) => d.laneConflict).length,
-      ready, target, shortage: Math.max(0, target - ready),
+      ready, target, shortage: replacementNeeds.reduce((n, group) => n + group.shortage, 0),
     },
   };
 }
@@ -200,8 +211,8 @@ export function htmlReport(r) {
   const hold = r.domains.filter((d) => d.proposedPool === 'hold');
   const table = '<div class="table-wrap"><table><thead><tr>' + headers.map((h) => '<th>' + h + '</th>').join('') + '</tr></thead><tbody>' + rows(r).map((row) => '<tr>' + row.map((cell) => '<td>' + esc(cell) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
   const css = 'body{font:16px/1.55 system-ui,sans-serif;color:#202b30;background:#fafaf7;margin:0}main{max-width:1160px;margin:auto;padding:40px 24px}h1{font-size:clamp(28px,5vw,46px);line-height:1.15;margin:10px 0 16px}h2{margin-top:38px;font-size:23px}h1{font-family:Georgia,serif;font-weight:500}.system-flow{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:24px 0;padding:18px 0;border-top:1px solid #dce2df;border-bottom:1px solid #dce2df}.system-flow div{flex:1;min-width:190px}.assumption{border-left:3px solid #a36522;padding-left:14px}p{max-width:88ch}small,.muted{color:#53636a}.label{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#156d67}.metrics{display:flex;gap:32px;flex-wrap:wrap;margin:28px 0}.metrics strong{display:block;font-size:34px;line-height:1.1}.metrics span{font-size:14px}table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:11px 12px;border-bottom:1px solid #dce2df;vertical-align:top}th{font-weight:600}td:first-child{overflow-wrap:anywhere}.table-wrap{overflow-x:auto}figure{margin:24px 0}figcaption{font-weight:600}svg{width:100%;height:auto;max-height:300px}svg text{font:13px system-ui;fill:#53636a}.flow{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:20px 0}.flow b{color:#156d67}li{margin-bottom:8px}summary{cursor:pointer;color:#156d67;padding:8px 0}a{color:#156d67}hr{border:0;border-top:1px solid #dce2df;margin:28px 0}@media(max-width:600px){main{padding:24px 14px}.metrics{gap:20px}th,td{padding:8px}svg text{font-size:15px}}@media print{body{background:white}main{padding:0}.table-wrap{overflow:visible}table{font-size:10px}th,td{padding:5px}details{display:block}}';
-  const findings = r.domains.filter((d) => d.reasons.length || d.notes).map((d) => '<li><strong>' + esc(d.domain) + '</strong>: ' + esc([...d.reasons, d.notes].filter(Boolean).join('. ')) + '</li>').join('');
-  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:; base-uri \'none\'"><title>Fleet review · ' + esc(s.run_id) + '</title><style>' + css + '</style></head><body><main><div class="label">builders.ac / fleet review / ' + esc(r.config.mode) + '</div><h1>How the fleet protects the next campaign.</h1><p>' + esc(s.coverage.description) + '</p><p class="muted">Report ' + esc(reportStamp(s)) + ' · ' + esc(s.run_id) + '. ' + (s.coverage.complete ? 'Complete declared scope.' : 'Partial fleet coverage.') + ' Report only; the helper never changes campaigns.</p><div class="metrics"><div><strong>' + count(t.mailboxes) + '</strong><span>mailboxes inspected</span></div><div><strong>' + t.attention + '</strong><span>domains need attention</span></div><div><strong>' + t.mixed + '</strong><span>domains shared across lanes</span></div></div><div class="flow"><b>Observe</b><span>→</span><b>Classify</b><span>→</span><b>Plan pools</b><span>→</span><b>Rehearse replacement</b></div>' + systemHtml(r) + '<h2>03 / Evidence behind the scenario</h2><p>Warmup window: ' + esc(s.windows.warmup.start) + '–' + esc(s.windows.warmup.end) + '. Sending window: ' + esc(s.windows.sending.start) + '–' + esc(s.windows.sending.end) + '. Dates are UTC. The chart is daily performance; the health rule uses the weighted seven-day rate.</p>' + chart(s, r.config.warmup_threshold) + '<h2>04 / Domain evidence and proposed assignments</h2>' + table + '<h2>What the rules recommend</h2><ul>' + findings + '</ul><h2>A provisional pool map</h2><p>Healthy, unassigned domains are sorted by name within each ESP. ' + pct(r.config.standby_share) + ' are reserved for a hypothetical standby lane and ' + pct(r.config.catchall_share) + ' for catch-all; the remainder is primary. These are domain-count planning assumptions. Existing configured assignments are preserved. Infrastructure-group separation still needs verification.</p><table><thead><tr><th>Proposed pool</th><th>Domains</th><th>Mailboxes</th><th>Status</th></tr></thead><tbody>' + poolSummary + '<tr><th>Hold / investigate</th><td>' + hold.length + '</td><td>' + count(hold.reduce((n, d) => n + d.mailboxes, 0)) + '</td><td>Not allocated</td></tr></tbody></table><h2>Replacement rehearsal</h2><p><strong>' + t.ready + ' verified standby mailboxes</strong> in the inspected data. Reserve target for covered campaign inventory: ' + t.target + '; gap: ' + t.shortage + '. This is a requirement, not an order or a claim about the uninspected fleet.</p><p>A proposed standby domain is not yet usable. Verify its warming age, complete current membership, health, infrastructure group and designation before selecting exact replacement mailboxes. With no verified candidates, the honest result is a replacement requirement—not a fictional successful swap.</p><h2>Collaboration handoff</h2><p>Our side supplies the health rules, replacement requirements and report. The customer team connects its backup inventory and consume an ESP/lane/quantity refill requirement in their existing ordering and warmup workflow. That connection is proposed, not implemented.</p><h2>Limits and next step</h2><p>Current membership does not prove historical isolation. Warmup does not prove campaign placement or cause. Authentication checks describe current configuration, not historical message authentication. ' + esc(s.limitations ?? '') + '</p><p>Use this report to compare pool rules with the other team. All allocations are local recommendations; no email, ordering, DNS or sequencer changes were made by this helper.</p><hr><small>Open locally or print to PDF. No external assets, tracking or network calls.</small></main></body></html>\n';
+  const findings = r.domains.filter((d) => d.reasons.length || d.historicalFindings.length || d.notes).map((d) => '<li><strong>' + esc(d.domain) + '</strong>: ' + esc([...d.reasons, ...d.historicalFindings.map((finding) => 'Historical only: ' + finding), d.notes].filter(Boolean).join('. ')) + '</li>').join('');
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:; base-uri \'none\'"><title>Fleet review · ' + esc(s.run_id) + '</title><style>' + css + '</style></head><body><main><div class="label">builders.ac / fleet review / ' + esc(r.config.mode) + '</div><h1>How the fleet protects the next campaign.</h1><p>' + esc(s.coverage.description) + '</p><p class="muted">Report ' + esc(reportStamp(s)) + ' · ' + esc(s.run_id) + '. ' + (s.coverage.complete ? 'Complete declared scope.' : 'Partial fleet coverage.') + ' Report only; the helper never changes campaigns.</p><div class="metrics"><div><strong>' + count(t.mailboxes) + '</strong><span>mailboxes inspected</span></div><div><strong>' + t.attention + '</strong><span>domains need attention</span></div><div><strong>' + t.mixed + '</strong><span>domains shared across lanes</span></div></div><div class="flow"><b>Observe</b><span>→</span><b>Classify</b><span>→</span><b>Plan pools</b><span>→</span><b>Rehearse replacement</b></div>' + systemHtml(r) + '<h2>03 / Evidence behind the scenario</h2><p>Warmup window: ' + esc(s.windows.warmup.start) + '–' + esc(s.windows.warmup.end) + '. Sending window: ' + esc(s.windows.sending.start) + '–' + esc(s.windows.sending.end) + '. Dates are UTC. The chart is daily performance; the health rule uses the weighted seven-day rate.</p>' + chart(s, r.config.warmup_threshold) + '<h2>04 / Domain evidence and proposed assignments</h2>' + table + '<h2>What the rules recommend</h2><ul>' + findings + '</ul><h2>Explicit pool assignments</h2><p>Pool roles come from configuration and captured campaign lanes. No percentage-based reassignment occurs. Ready counts require individual mailbox evidence; domain averages are context only. Catch-all sending history permanently excludes the domain and all its mailboxes from Primary.</p><table><thead><tr><th>Proposed pool</th><th>Domains</th><th>Mailboxes</th><th>Status</th></tr></thead><tbody>' + poolSummary + '<tr><th>Hold / investigate</th><td>' + hold.length + '</td><td>' + count(hold.reduce((n, d) => n + d.mailboxes, 0)) + '</td><td>Not allocated</td></tr></tbody></table><h2>Replacement rehearsal</h2><p><strong>' + t.ready + ' verified standby mailboxes</strong> in the inspected data. Mailbox replacement candidates in the inspected evidence: ' + t.target + '; gap: ' + t.shortage + '. This is a requirement, not an order or a claim about the uninspected fleet.</p><p>A proposed standby domain is not yet usable. Verify its warming age, complete current membership, health, infrastructure group and designation before selecting exact replacement mailboxes. With no verified candidates, the honest result is a replacement requirement—not a fictional successful swap.</p><h2>Collaboration handoff</h2><p>Our side supplies the health rules, replacement requirements and report. The customer team connects its backup inventory and consume an ESP/lane/quantity refill requirement in their existing ordering and warmup workflow. That connection is proposed, not implemented.</p><h2>Limits and next step</h2><p>Current membership does not prove historical isolation. Warmup does not prove campaign placement or cause. Authentication checks describe current configuration, not historical message authentication. ' + esc(s.limitations ?? '') + '</p><p>Use this report to compare pool rules with the other team. All allocations are local recommendations; no email, ordering, DNS or sequencer changes were made by this helper.</p><hr><small>Open locally or print to PDF. No external assets, tracking or network calls.</small></main></body></html>\n';
 }
 
 export async function generateReport(directory) {
@@ -228,7 +239,9 @@ export async function generateReport(directory) {
     await writeFile(destination, dashboard);
   }
   await writeFile(path('report.md'), body);
-  await writeFile(path('swap.md'), frontmatter + '\n# Fleet review\n\nRun ' + snapshot.run_id + '. Open [the fleet dashboard](dashboard.html). Read [the simulation walkthrough](report.md).\n');
+  const historyLine = 'catchall_history_domains: ' + JSON.stringify(result.catchallHistory);
+  const nextFrontmatter = /^catchall_history_domains:/m.test(frontmatter) ? frontmatter.replace(/^catchall_history_domains:.*$/m, () => historyLine) : frontmatter.replace(/\n---\s*$/, '\n' + historyLine + '\n---\n');
+  await writeFile(path('swap.md'), nextFrontmatter + '\n# Fleet review\n\nRun ' + snapshot.run_id + '. Open [the fleet dashboard](dashboard.html). Read [the simulation walkthrough](report.md).\n');
   await writeFile(path('runs.csv'), filtered.join('\n') + '\n');
   return result;
 }

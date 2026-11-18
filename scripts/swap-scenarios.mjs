@@ -8,15 +8,15 @@ export function reportStamp(snapshot) {
 }
 
 export function forecast(r) {
-  const source = r.domains.filter((d) => d.memberships.length && d.reasons.some((reason) => reason.startsWith('Warmup below'))).sort((a, b) => a.warmupRate - b.warmupRate || a.domain.localeCompare(b.domain, 'en'))[0];
+  const source = (r.mailboxes ?? []).filter((m) => m.replaceCandidate).sort((a, b) => a.id.localeCompare(b.id))[0];
   if (!source) return null;
-  const replacements = source.mailboxes;
+  const replacements = 1;
   // Deliberately hypothetical stock, not inferred from the observed/proposed pool.
   const assumedStandbys = replacements * 2;
   const remaining = assumedStandbys - replacements;
   return {
     source, replacements, assumedStandbys, remaining,
-    reserveTarget: r.totals.target, refill: Math.max(0, r.totals.target - remaining),
+    reserveTarget: assumedStandbys, refill: replacements,
     capacityCeiling: source.capacity_today,
     assumptions: 'Assume ' + assumedStandbys + ' verified ' + source.esp + ' standby mailboxes, at least ' + r.config.ready_days + ' days warmed, healthy DNS and warmup, outside campaign commitments and failing infrastructure. This stock is illustrative, not discovered inventory.',
   };
@@ -28,16 +28,16 @@ export function systemMarkdown(r) {
     '## How the proposed system works', '',
     'PlusVibe evidence → DNS / warmup / bounce rules → pool and health classification → replacement forecast → reserve check → local report.', '',
     '| Pool / state | Purpose | Entry and exit |', '| --- | --- | --- |',
-    '| A · Primary | Deliverable-lead campaigns | Healthy, designated primary inventory |',
+    '| A · Primary | Deliverable-lead campaigns | Healthy, designated inventory with verified no Catch-all domain history |',
     '| B · Catch-all | Isolate catch-all sending | Dedicated domains and verified independent infrastructure |',
-    '| C · Standby | Replace a sender in either lane | Known warming age, health and no campaign commitments; consumed by a swap |',
+    '| C · Standby | Replace a sender in either lane | Own health, warming age, explicit lane and no campaign commitments; one mailbox per swap |',
     '| Recovery | Keep poor-performing senders out of outreach | Re-evaluate evidence before returning; warmup continues only if already enabled |',
     '| Configuration review | Investigate failed authentication checks | Repair and verify; a provider flag alone does not prove root cause |', '',
     'The agent workflow and local review/report helper are implemented. Pool assignments are proposed. Sending, swapping, ordering and recovery outcomes in the following scenario are forecasts, not executed results.', '',
     ...(f ? ['## Scenario: ' + f.source.domain, '',
       'Observed: ' + f.source.mailboxes + ' mailboxes, seven-day warmup inbox ' + (f.source.warmupRate * 100).toFixed(2) + '%, ' + f.source.sent + ' account-level campaign sends and ' + f.source.sender_bounces + ' sender bounces in the stated window.', '',
       'Assumption: ' + f.assumptions, '',
-      '1. Flag the domain from warmup evidence; do not wait for bounce volume.',
+      '1. Flag only the individual mailbox from its own fresh evidence.',
       '2. Recommend excluding these mailboxes from the next launch. A draft stays a draft; there is no executable live swap in this report.',
       '3. If used in an authorized active-campaign scenario, select ' + f.replacements + ' same-ESP replacements, attach and verify all required memberships, then detach and verify the source.',
       '4. If any attachment fails, keep the source attached and record the partial result; do not report a successful swap.',
@@ -63,7 +63,7 @@ export function systemHtml(r) {
   if (!f) return overview;
   const draft = f.source.campaigns.filter((c) => c.status === 'DRAFT').map((c) => c.name).join('; ');
   const cases = [
-    ['Detect', (f.source.warmupRate * 100).toFixed(2) + '% seven-day warmup inbox; ' + f.source.sender_bounces + ' recorded sender bounces', 'Flag the domain from health evidence, even when a bounce-only trigger stays quiet.'],
+    ['Detect', (f.source.warmupRate * 100).toFixed(2) + '% seven-day warmup inbox; ' + f.source.sender_bounces + ' recorded sender bounces', 'Flag the individual mailbox from its own health evidence, even when a bounce-only trigger stays quiet.'],
     ['Protect the next launch', draft || 'Current campaign assignments', 'Recommend excluding the affected ' + f.replacements + ' mailboxes before launch. No draft activation or membership edit is performed.'],
     ['Select', f.assumptions, 'Forecast ' + f.replacements + ' compatible replacements; reject unknown ages, shared failing infrastructure or already committed accounts.'],
     ['Verify before removing', 'Hypothetical authorized active-campaign execution', 'Attach replacements → verify every required attachment → remove source → verify final membership. A failure keeps the source attached; partial attachments are recorded.'],

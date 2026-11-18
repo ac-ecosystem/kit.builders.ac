@@ -51,7 +51,7 @@ node scripts/swap-workspace.mjs check
 ~~~
 
 The helper has no network or execution calls. It validates the saved snapshot,
-calculates health and a deterministic planning split, then writes the dashboard and reports. Publication is a separate agent step.
+calculates health and preserves explicit/observed pool roles, then writes the dashboard and reports. Publication is a separate agent step.
 
 ## Pools and policy
 
@@ -60,25 +60,31 @@ warmup performance. A domain used in both lanes is an isolation finding; current
 membership does not prove historical use. Domain separation does not establish
 tenant/IP separation.
 
-With no supplied map, the helper can demonstrate a proposed allocation within
-each ESP. It sorts healthy domains by name, allocates 10% of domains to standby
-and 20% to catch-all (rounded up), and leaves the remainder primary. These are
-editable planning assumptions, not optimized or deployed assignments. Explicit
-assignments in swap.md take precedence.
+Use explicit Primary / Catch-all / Standby domain designations and observed campaign
+lanes. Unmapped inventory stays unassigned. Percentage allocation has been removed.
+Previously Catch-all domains and every mailbox on them are permanently excluded
+from Primary, even after warming or recovery. Persist that history across runs.
 
-Default health rules are at least 90% inbox among classified warmup outcomes
-over seven complete UTC dates, with at least 200 domain outcomes; fresh DNS checks;
-and 5% sender bounces over three days with at least 200 sends. Recipient-side
-bounces are investigated as list issues. These policies need operational tuning.
+The unit is one mailbox. Domain health is context, not permission to swap every
+mailbox. The default signal rules are fresh DNS, a 90% seven-day warmup inbox rate,
+and a 3% sender-side bounce cutoff over three complete UTC days. Each mailbox
+needs ≥50 classified warmup results over the seven-day window and ≥50 sends over
+the three-day window for the corresponding rule to evaluate. Insufficient data
+leaves that assessment unverified; other checks can still be assessed.
 
-A verified standby also requires explicit designation, at least 15 known days of
-warming and complete availability evidence. Unverified candidates remain visible.
-A proposed standby pool is not counted as a verified pool.
+A qualified standby needs individual evidence, explicit target lane and domain
+standby designation, at least 15 known warming days, fresh passing health, nonzero
+capacity and no campaign attachments of any status. Never count every mailbox on
+a domain from one representative. Unknown Catch-all history blocks Primary use.
+No rotation, cooldown, automatic return to sending or purchasing is implemented.
+
+Read [the compact operating rules](../.agents/skills/ac-swap/references/rules.md)
+for precise thresholds, failure behavior and the mailbox evidence contract.
 
 ## Forecast without live actions
 
-A scenario can use a real unhealthy domain and assume a stated quantity of
-verified replacement mailboxes. Show how that quantity would be consumed, what
+A scenario selects one individually evidenced unhealthy mailbox and assumes a
+qualified one-for-one replacement. Domain-only snapshots select no source. Show how that quantity would be consumed, what
 campaign membership would change, how failures would stop detachment, and what
 reserve gap would result. Forecast capacity from inherited limits, not mailbox
 count alone. Do not invent replacement identities or claim recovery occurred.
